@@ -43,7 +43,7 @@ class PostController extends Controller
     public function show(Post $post)
     {
         abort_if((Auth::id() !== $post->author_id), 403, 'Access Forbidden'); 
-
+        $post->load('author');
         return new PostResource($post);
     }
 
@@ -69,7 +69,7 @@ class PostController extends Controller
     public function destroy(Post $post)
     {
         abort_if((Auth::id() !== $post->author_id), 403, 'Access Forbidden');
-        
+        $post->delete();
         return response()->noContent();
     }
 }
