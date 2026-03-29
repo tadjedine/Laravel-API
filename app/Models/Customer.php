@@ -115,4 +115,12 @@ class Customer extends Model
 		'reset_password_token',
 		'reset_password_validity'
 	];
+
+	public function orders() {
+    	return $this->hasMany(Order::class, 'id_customer');
+	}
+
+	public function carts() {
+    	return $this->hasMany(Cart::class, 'id_customer');
+	}
 }

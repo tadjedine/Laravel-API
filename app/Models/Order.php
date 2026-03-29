@@ -156,4 +156,14 @@ class Order extends Model
 		'date_upd',
 		'note'
 	];
+
+	Public function customer ()
+	{
+		return $this->belongsTo(Customer::class, 'id_customer');
+	}
+
+	public function products() {
+    	return $this->belongsToMany(Product::class, 'ps_order_detail', 'id_order', 'product_id');
+	}
+
 }

@@ -62,4 +62,17 @@ class Category extends Model
 		'position',
 		'is_root_category'
 	];
+
+	public function products() 
+	{
+		return $this->belongsToMany(Product::class, 'ps_category_product', 'id_category', 'id_product');
+	}
+
+	public function parent() {
+    	return $this->belongsTo(Category::class, 'id_parent', 'id_category');
+	}
+
+	public function children() {
+    	return $this->hasMany(Category::class, 'id_parent', 'id_category');
+	}
 }

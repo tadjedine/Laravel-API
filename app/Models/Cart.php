@@ -80,4 +80,6 @@ class Cart extends Model
 		'date_upd',
 		'checkout_session_data'
 	];
+
+	
 }

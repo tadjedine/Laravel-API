@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Class PsProduct
@@ -180,4 +181,17 @@ class Product extends Model
 		'state',
 		'product_type'
 	];
+
+
+	public function categories() {
+    	return $this->belongsToMany(Category::class, 'ps_category_product', 'id_product', 'id_category');
+	}
+
+	public function carts() {
+    	return $this->belongsToMany(Cart::class, 'ps_cart_product', 'id_product', 'id_cart');
+	}
+
+	public function orders() {
+    	return $this->belongsToMany(Order::class, 'ps_order_detail', 'product_id', 'id_order');
+	}
 }
