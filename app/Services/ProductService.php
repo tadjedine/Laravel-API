@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Repositories\ProductRepository;
+use App\Models\Category;
 use App\Models\Product;
+use App\Repositories\ProductRepository;
 // use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProductService
@@ -23,7 +24,8 @@ class ProductService
         //     throw new ModelNotFoundException();
         // }
         // No need to check the product's existence here, we check in the repo
-        $product->load(['images', 'attributes', 'reviews']);
+        //$product->load(['images', 'attributes', 'reviews']);
+        $product->load(['images']);
         return $product;
     }
 
@@ -35,6 +37,9 @@ class ProductService
 
     public function getProductsByCategory(int $categoryId, array $filters = [])
     {
+        // we verify first the category existence
+        $category = Category::findOrFail($categoryId);
+        
         return $this->productRepository->getByCategory($categoryId, $filters);
     }
 
