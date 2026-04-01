@@ -34,6 +34,34 @@ class ProductRepository{
 
     }
 
+     public function create(array $data): Product
+    {
+        return Product::create($data);
+    }
+
+    public function update(int $id, array $data): Product
+    {
+        $product = $this->getById($id);
+        
+        if (!$product) {
+            throw new \Exception("Product not found");
+        }
+
+        $product->update($data);
+        return $product;
+    }
+
+    public function delete(int $id): bool
+    {
+        $product = $this->getById($id);
+        
+        if (!$product) {
+            throw new \Exception("Product not found");
+        }
+
+        return $product->delete();
+    }
+
     public function getByCategory(int $categoryId, array $filters = []): LengthAwarePaginator
     {
     

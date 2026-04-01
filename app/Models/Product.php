@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Image;
 
 /**
  * Class PsProduct
@@ -193,5 +194,10 @@ class Product extends Model
 
 	public function orders() {
     	return $this->belongsToMany(Order::class, 'ps_order_detail', 'product_id', 'id_order');
+	}
+
+	public function images()
+	{
+		return $this->hasMany(Image::class,'id_product');
 	}
 }

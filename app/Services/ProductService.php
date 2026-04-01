@@ -29,6 +29,21 @@ class ProductService
         return $product;
     }
 
+    public function createProduct(array $data): Product
+    {
+        return $this->productRepository->create($data);
+    }
+
+    public function updateProduct(int $id, array $data): Product
+    {
+        return $this->productRepository->update($id, $data);
+    }
+
+    public function deleteProduct(int $id): void
+    {
+        $this->productRepository->delete($id);
+    }
+    
     public function isInStock(int $productId, int $quantity = 1): bool
     {
         $product = $this->productRepository->getById($productId);

@@ -35,4 +35,9 @@ class PsImage extends Model
 		'position',
 		'cover'
 	];
+
+	public function product()
+	{
+		return $this->belongsTo(Product::class, 'id_product');
+	}
 }
