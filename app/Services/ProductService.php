@@ -43,7 +43,7 @@ class ProductService
     {
         $this->productRepository->delete($id);
     }
-    
+
     public function isInStock(int $productId, int $quantity = 1): bool
     {
         $product = $this->productRepository->getById($productId);
@@ -61,6 +61,23 @@ class ProductService
     public function searchProducts(string $query, array $filters = [])
     {
         return $this->productRepository->search($query, $filters);
+    }
+
+    public function getImage(int $productId, int $imageId)
+    {
+        $product = $this->productRepository->getById($productId);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $image = $product->images()->where('id_image', $imageId)->first();
+
+        if (!$image) {
+            return response()->json(['message' => 'Image not found'], 404);
+        }
+
+        return $image;
     }
     
 }

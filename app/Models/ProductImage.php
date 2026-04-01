@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsImage extends Model
+class ProductImage extends Model
 {
 	protected $table = 'ps_image';
 	protected $primaryKey = 'id_image';
