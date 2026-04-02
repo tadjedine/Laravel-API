@@ -42,12 +42,8 @@ class ProductRepository{
     public function update(int $id, array $data): Product
     {
         $product = $this->getById($id);
-        
-        if (!$product) {
-            throw new \Exception("Product not found");
-        }
-
         $product->update($data);
+
         return $product;
     }
 
@@ -55,10 +51,6 @@ class ProductRepository{
     {
         $product = $this->getById($id);
         
-        if (!$product) {
-            throw new \Exception("Product not found");
-        }
-
         return $product->delete();
     }
 
@@ -71,9 +63,14 @@ class ProductRepository{
 
     public function search(string $query, array $filters = []): LengthAwarePaginator
     {
-        return Product::where('name', 'like', '%' . $query . '%')
-            ->orWhere('description', 'like', '%' . $query . '%')
-            ->paginate($filters['per_page'] ?? 15);
+        // return Product::where('name', 'like', '%' . $query . '%')
+        //     ->orWhere('description', 'like', '%' . $query . '%')
+        //     ->paginate($filters['per_page'] ?? 15);
+        
+        return Product::where(function($q) use ($query) {
+            $q->where('name', 'like', '%'.$query.'%')
+         ->orWhere('description', 'like', '%'.$query.'%');
+            })->where('active', 1);
     }
 
 

@@ -67,15 +67,7 @@ class ProductService
     {
         $product = $this->productRepository->getById($productId);
 
-        if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-
-        $image = $product->images()->where('id_image', $imageId)->first();
-
-        if (!$image) {
-            return response()->json(['message' => 'Image not found'], 404);
-        }
+        $image = $product->images()->where('id_image', $imageId)->firstOrFail();
 
         return $image;
     }

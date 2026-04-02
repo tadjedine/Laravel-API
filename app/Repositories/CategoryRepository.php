@@ -33,12 +33,8 @@ class CategoryRepository{
     public function update(int $id, array $data): Category
     {
         $category = $this->getById($id);
-        
-        if (!$category) {
-            throw new \Exception("Category not found");
-        }
-
         $category->update($data);
+
         return $category;
     }
 
@@ -46,10 +42,6 @@ class CategoryRepository{
     {
         $category = $this->getById($id);
         
-        if (!$category) {
-            throw new \Exception("Category not found");
-        }
-
         return $category->delete();
     }
 
