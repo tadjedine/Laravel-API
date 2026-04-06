@@ -22,8 +22,8 @@ class CategoryResource extends JsonResource
             'position' => $this->position,
             'level_depth' => $this->level_depth,
             'is_root' => (bool) $this->is_root_category,
-            'products_count' => $this->when(isset($this->products), $this->products->count()),
-            'children_count' => $this->when(isset($this->children), $this->children->count()),
+            // 'products_count' => $this->when(isset($this->products), $this->products->count()),
+            // 'children_count' => $this->when(isset($this->children), $this->children->count()),
         ];
     }
 }

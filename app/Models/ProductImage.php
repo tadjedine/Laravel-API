@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Reliese\Coders\Model\Relations\BelongsTo;
 
 /**
  * Class PsImage
@@ -38,6 +39,37 @@ class ProductImage extends Model
 
 	public function product()
 	{
-		return $this->belongsTo(Product::class, 'id_product');
+		return $this->belongsTo(Product::class, 'id_product', 'id_product');
 	}
+
+	// public function lang()
+    // {
+    //     return $this->hasOne(ImageLang::class, 'id_image', 'id_image');
+    // }
+
+	public function getImgPath(): string
+    {
+        $id = (string) $this->id_image;
+        return implode('/', str_split($id));
+    }
+
+	public function getUrl(string $type = 'large_default'): string
+    {
+        $path = $this->getImgPath();
+        $baseUrl = config('prestashop.image_base_url', 'https://prestashop.test');
+
+        return "{$baseUrl}/img/p/{$path}/{$this->id_image}-{$type}.jpg";
+    }
+
+	public function getUrlsAttribute(): array
+    {
+        return [
+            'original' => $this->getUrl('large_default'),
+            'home'     => $this->getUrl('home_default'),
+            'medium'   => $this->getUrl('medium_default'),
+            'small'    => $this->getUrl('small_default'),
+            'cart'     => $this->getUrl('cart_default'),
+        ];
+    }
+	
 }

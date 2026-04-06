@@ -1,0 +1,11 @@
+php artisan make:model CartItem -m
+php artisan make:model OrderItem -m
+php artisan make:model Review -m
+php artisan make:model Wishlist -m
+php artisan make:model WishlistItem -m
+php artisan make:model Coupon -m
+php artisan make:model ProductImage -m
+php artisan make:model ProductAttribute -m
+php artisan make:model Address -m
+php artisan make:model Payment -m
+php artisan make:model Inventory -m

@@ -17,9 +17,11 @@ class ProductImageResource extends JsonResource
           return [
             'id' => $this->id_image,
             'product_id' => $this->id_product,
-            'image_path' => $this->image_path ?? null,
             'position' => $this->position,
             'cover' => (bool) $this->cover,
+            'url'       => $this->getUrl('large_default'),     // main image
+            'urls'      => $this->urls,
+            'legend'    => $this->whenLoaded('lang')?->legend ?? null,
         ];
     }
 }
