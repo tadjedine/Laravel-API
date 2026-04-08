@@ -33,7 +33,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsProductAttribute extends Model
+class ProductAttribute extends Model
 {
 	protected $table = 'ps_product_attribute';
 	protected $primaryKey = 'id_product_attribute';

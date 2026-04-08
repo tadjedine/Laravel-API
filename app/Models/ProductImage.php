@@ -56,7 +56,7 @@ class ProductImage extends Model
 	public function getUrl(string $type = 'large_default'): string
     {
         $path = $this->getImgPath();
-        $baseUrl = config('prestashop.image_base_url', 'https://prestashop.test');
+        $baseUrl = config('prestashop.base_url');
 
         return "{$baseUrl}/img/p/{$path}/{$this->id_image}-{$type}.jpg";
     }

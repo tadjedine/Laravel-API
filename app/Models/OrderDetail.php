@@ -6,8 +6,11 @@
 
 namespace App\Models;
 
+use App\Models\Order;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class PsOrderDetail
@@ -64,7 +67,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsOrderDetail extends Model
+class OrderDetail extends Model
 {
 	protected $table = 'ps_order_detail';
 	protected $primaryKey = 'id_order_detail';
@@ -162,4 +165,14 @@ class PsOrderDetail extends Model
 		'total_refunded_tax_excl',
 		'total_refunded_tax_incl'
 	];
+
+	public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'id_order');
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id_product');
+    }
 }

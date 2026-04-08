@@ -6,8 +6,12 @@
 
 namespace App\Models;
 
+use App\Models\CartProduct;
+use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class PsCart
@@ -81,5 +85,21 @@ class Cart extends Model
 		'checkout_session_data'
 	];
 
+
+	// Relationships
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'id_customer', 'id_customer');
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(CartProduct::class, 'id_cart', 'id_cart');
+    }
+
+    // public function cartRules(): HasMany
+    // {
+    //     return $this->hasMany(CartCartRule::class, 'id_cart', 'id_cart'); // if you need promo codes
+    // }
 	
 }
