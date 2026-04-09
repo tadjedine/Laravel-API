@@ -9,3 +9,7 @@ php artisan make:model ProductAttribute -m
 php artisan make:model Address -m
 php artisan make:model Payment -m
 php artisan make:model Inventory -m
+
+
+Packages:
+composer require "darkaonline/l5-swagger"
