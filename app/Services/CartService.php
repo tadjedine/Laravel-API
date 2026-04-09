@@ -2,274 +2,389 @@
 
 namespace App\Services;
 
+use App\Models\Cart;
+use App\Models\CartProduct;
 use App\Models\Product;
+use App\Models\ProductAttribute;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
-use SimpleXMLElement;
 
 class CartService
 {
-	public function __construct(private PrestashopService $prestashopService) {}
+    public function getOrCreateCart(int $customerId, array $context = []): array
+    {
+        $cart = $this->findLatestOpenCartByCustomer($customerId);
 
-	public function getOrCreateCart(int $customerId, array $context = []): array
-	{
-		$cartId = $this->findLatestCartIdByCustomer($customerId);
+        if (! $cart) {
+            $cart = $this->createCart(array_merge($context, ['id_customer' => $customerId]));
+        }
 
-		if ($cartId === null) {
-			$cartId = $this->createCartFromBlankSchema($customerId, $context);
-		}
+        $cart->load(['products.product.images', 'products.combination', 'order']);
 
-		$cartXml = $this->loadCartXml($cartId);
+        return $this->normalizeCart($cart);
+    }
 
-		return $this->normalizeCart($cartXml->cart);
-	}
+    public function addItem(int $customerId, int $productId, int $quantity = 1, array $context = []): array
+    {
+        if ($quantity < 1) {
+            throw new RuntimeException('Quantity must be at least 1.');
+        }
 
-	public function addItem(int $customerId, int $productId, int $quantity = 1, array $context = []): array
-	{
-		if ($quantity < 1) {
-			throw new RuntimeException('Quantity must be at least 1.');
-		}
+        $cart = DB::transaction(function () use ($customerId, $productId, $quantity, $context) {
+            $cart = $this->findLatestOpenCartByCustomer($customerId);
 
-		$cartId = $this->findLatestCartIdByCustomer($customerId);
+            if (! $cart) {
+                $cart = $this->createCart(array_merge($context, ['id_customer' => $customerId]));
+            }
 
-		if ($cartId === null) {
-			$cartId = $this->createCartFromBlankSchema($customerId, $context);
-		}
+            $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
 
-		$cartXml = $this->loadCartXml($cartId);
-		$cart = $cartXml->cart;
+            $this->upsertCartLine($lockedCart, $productId, $quantity, $context, true);
 
-		$this->ensureCartRowsNode($cart);
+            return $lockedCart;
+        });
 
-		$existingIndex = $this->findCartRowIndexByProduct((int) $productId, $cart->associations->cart_rows);
+        $cart->load(['products.product.images', 'products.combination', 'order']);
 
-		if ($existingIndex !== null) {
-            // Update existing row
-			$currentQuantity = (int) $cart->associations->cart_rows->cart_row[$existingIndex]->quantity;
-			$cart->associations->cart_rows->cart_row[$existingIndex]->quantity = (string) ($currentQuantity + $quantity);
-		} else {
-            // Add new row
-			$cartRow = $cart->associations->cart_rows->addChild('cart_row');
-			$cartRow->addChild('id_product', (string) $productId);
-			$cartRow->addChild('id_product_attribute', '0');
-			$cartRow->addChild('id_address_delivery', (string) ((int) ($cart->id_address_delivery ?? 0)));
-			$cartRow->addChild('id_customization', '0');
-			$cartRow->addChild('quantity', (string) $quantity);
-		}
+        return $this->normalizeCart($cart);
+    }
 
-		$updatedXml = $this->saveCartXml($cartId, $cartXml);
+    public function updateItemQuantity(int $customerId, int $productId, int $quantity, array $context = []): array
+    {
+        if ($quantity < 0) {
+            throw new RuntimeException('Quantity cannot be negative.');
+        }
 
-		return $this->normalizeCart($updatedXml->cart);
-	}
+        $cart = DB::transaction(function () use ($customerId, $productId, $quantity, $context) {
+            $cart = $this->findLatestOpenCartByCustomer($customerId);
 
-	public function updateItemQuantity(int $customerId, int $productId, int $quantity): array
-	{
-		if ($quantity < 0) {
-			throw new RuntimeException('Quantity cannot be negative.');
-		}
+            if (! $cart) {
+                throw new RuntimeException('No active cart found for this customer.');
+            }
 
-		$cartId = $this->findLatestCartIdByCustomer($customerId);
+            $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
 
-		if ($cartId === null) {
-			throw new RuntimeException('No active cart found for this customer.');
-		}
+            $idProductAttribute = (int) ($context['id_product_attribute'] ?? 0);
+            $idCustomization = (int) ($context['id_customization'] ?? 0);
+            $idAddressDelivery = array_key_exists('id_address_delivery', $context)
+                ? (int) $context['id_address_delivery']
+                : (int) $lockedCart->id_address_delivery;
 
-		$cartXml = $this->loadCartXml($cartId);
-		$cart = $cartXml->cart;
+            $line = CartProduct::query()
+                ->where('id_cart', $lockedCart->id_cart)
+                ->where('id_product', $productId)
+                ->where('id_product_attribute', $idProductAttribute)
+                ->where('id_customization', $idCustomization)
+                ->where('id_address_delivery', $idAddressDelivery)
+                ->lockForUpdate()
+                ->first();
 
-		$this->ensureCartRowsNode($cart);
+            if (! $line) {
+                throw new RuntimeException('Product is not present in the cart.');
+            }
 
-		$index = $this->findCartRowIndexByProduct($productId, $cart->associations->cart_rows);
+            if ($quantity === 0) {
+                $line->delete();
+            } else {
+                $minimumQuantity = $this->resolveMinimumQuantity($productId, $idProductAttribute);
+                if ($quantity < $minimumQuantity) {
+                    throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
+                }
 
-		if ($index === null) {
-			throw new RuntimeException('Product is not present in the cart.');
-		}
+                $line->quantity = $quantity;
+                $line->date_add = Carbon::now();
+                $line->save();
+            }
 
-		if ($quantity === 0) {
-			unset($cart->associations->cart_rows->cart_row[$index]);
-		} else {
-			$cart->associations->cart_rows->cart_row[$index]->quantity = (string) $quantity;
-		}
+            $lockedCart->date_upd = Carbon::now();
+            $lockedCart->save();
 
-		$updatedXml = $this->saveCartXml($cartId, $cartXml);
+            return $lockedCart;
+        });
 
-		return $this->normalizeCart($updatedXml->cart);
-	}
+        $cart->load(['products.product.images', 'products.combination', 'order']);
 
-	public function removeItem(int $customerId, int $productId): array
-	{
-		return $this->updateItemQuantity($customerId, $productId, 0);
-	}
+        return $this->normalizeCart($cart);
+    }
 
-	public function clearItems(int $customerId): array
-	{
-		$cartId = $this->findLatestCartIdByCustomer($customerId);
+    public function removeItem(int $customerId, int $productId, array $context = []): array
+    {
+        return $this->updateItemQuantity($customerId, $productId, 0, $context);
+    }
 
-		if ($cartId === null) {
-			throw new RuntimeException('No active cart found for this customer.');
-		}
+    public function clearItems(int $customerId): array
+    {
+        $cart = DB::transaction(function () use ($customerId) {
+            $cart = $this->findLatestOpenCartByCustomer($customerId);
 
-		$cartXml = $this->loadCartXml($cartId);
-		$cart = $cartXml->cart;
+            if (! $cart) {
+                throw new RuntimeException('No active cart found for this customer.');
+            }
 
-		$this->ensureCartRowsNode($cart);
+            $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
 
-		foreach ($cart->associations->cart_rows->cart_row as $index => $row) {
-			unset($cart->associations->cart_rows->cart_row[$index]);
-		}
+            CartProduct::query()->where('id_cart', $lockedCart->id_cart)->delete();
 
-		$updatedXml = $this->saveCartXml($cartId, $cartXml);
+            $lockedCart->date_upd = Carbon::now();
+            $lockedCart->save();
 
-		return $this->normalizeCart($updatedXml->cart);
-	}
+            return $lockedCart;
+        });
 
-    //************** */
-    // Private helpers
-    //************** */
+        $cart->load(['products.product.images', 'products.combination', 'order']);
 
-    private function findLatestCartIdByCustomer(int $customerId): ?int
-	{
-		$response = $this->prestashopService->request('GET', 'carts', [
-			'display' => '[id]',
-			'filter[id_customer]' => '[' . $customerId . ']',
-            'filter[orderered]'   => '[0]',
-			'sort' => '[id_DESC]',
-			'limit' => '1',
-		]);
+        return $this->normalizeCart($cart);
+    }
 
-		if (! isset($response->carts) || ! isset($response->carts->cart)) {
-			return null;
-		}
+    public function createCart(array $data): Cart
+    {
+        $defaults = $this->resolveCartDefaults();
+        $now = Carbon::now();
 
-		return (int) $response->carts->cart->id;
-	}
+        $cartData = array_merge([
+            'id_shop_group' => $defaults['id_shop_group'],
+            'id_shop' => $defaults['id_shop'],
+            'id_carrier' => 0,
+            'delivery_option' => '',
+            'id_lang' => $defaults['id_lang'],
+            'id_address_delivery' => 0,
+            'id_address_invoice' => 0,
+            'id_currency' => $defaults['id_currency'],
+            'id_customer' => 0,
+            'id_guest' => 0,
+            'secure_key' => Str::random(32),
+            'recyclable' => 0,
+            'gift' => 0,
+            'gift_message' => null,
+            'mobile_theme' => false,
+            'allow_seperated_package' => 0,
+            'date_add' => $now,
+            'date_upd' => $now,
+            'checkout_session_data' => null,
+        ], $data);
 
-	private function createCartFromBlankSchema(int $customerId, array $context): int
-	{
-		$schema = $this->prestashopService->request('GET', 'carts', ['schema' => 'blank']);
+        if (empty($cartData['id_lang']) || empty($cartData['id_currency'])) {
+            throw new RuntimeException('Cart creation requires id_lang and id_currency.');
+        }
 
-		if (! isset($schema->cart)) {
-			throw new RuntimeException('Unable to load blank cart schema from PrestaShop.');
-		}
+        return Cart::query()->create($cartData);
+    }
 
-		$cart = $schema->cart;
+    public function addProduct(
+        int $idCart,
+        int $idProduct,
+        int $quantity,
+        int $idProductAttribute = 0,
+        int $idCustomization = 0,
+        int $idAddressDelivery = 0
+    ): CartProduct {
+        if ($quantity < 1) {
+            throw new RuntimeException('Quantity must be at least 1.');
+        }
 
-		$idShop = (string) ($context['id_shop'] ?? config('prestashop.default_shop_id'));
-		$idShopGroup = (string) ($context['id_shop_group'] ?? config('prestashop.default_shop_group_id'));
-		$idCurrency = (string) ($context['id_currency'] ?? config('prestashop.default_currency_id'));
-		$idLang = (string) ($context['id_lang'] ?? config('prestashop.default_lang_id'));
-		$idAddressDelivery = (string) ($context['id_address_delivery'] ?? 0);
-		$idAddressInvoice = (string) ($context['id_address_invoice'] ?? 0);
-		$idCarrier = (string) ($context['id_carrier'] ?? 0);
+        return DB::transaction(function () use ($idCart, $idProduct, $quantity, $idProductAttribute, $idCustomization, $idAddressDelivery) {
+            $cart = Cart::query()->whereKey($idCart)->lockForUpdate()->firstOrFail();
 
-		if ($idShop === '' || $idShopGroup === '' || $idCurrency === '' || $idLang === '') {
-			throw new RuntimeException('Missing required cart defaults. Set prestashop defaults or pass context values.');
-		}
+            return $this->upsertCartLine($cart, $idProduct, $quantity, [
+                'id_product_attribute' => $idProductAttribute,
+                'id_customization' => $idCustomization,
+                'id_address_delivery' => $idAddressDelivery,
+            ], true);
+        });
+    }
 
-		$cart->id_shop = $idShop;
-		$cart->id_shop_group = $idShopGroup;
-		$cart->id_currency = $idCurrency;
-		$cart->id_lang = $idLang;
-		$cart->id_customer = (string) $customerId;
-		$cart->id_guest = '0';
-		$cart->id_carrier = $idCarrier;
-		$cart->id_address_delivery = $idAddressDelivery;
-		$cart->id_address_invoice = $idAddressInvoice;
-		$cart->secure_key = (string) ($context['secure_key'] ?? md5($customerId . '|' . microtime(true)));
+    public function removeProduct(
+        int $idCart,
+        int $idProduct,
+        int $idProductAttribute = 0,
+        int $idCustomization = 0,
+        int $idAddressDelivery = 0,
+        ?int $quantityToRemove = null
+    ): void {
+        DB::transaction(function () use ($idCart, $idProduct, $idProductAttribute, $idCustomization, $idAddressDelivery, $quantityToRemove) {
+            $line = CartProduct::query()
+                ->where('id_cart', $idCart)
+                ->where('id_product', $idProduct)
+                ->where('id_product_attribute', $idProductAttribute)
+                ->where('id_customization', $idCustomization)
+                ->where('id_address_delivery', $idAddressDelivery)
+                ->lockForUpdate()
+                ->first();
 
-		if (! isset($cart->associations)) {
-			$cart->addChild('associations');
-		}
+            if (! $line) {
+                return;
+            }
 
-		if (! isset($cart->associations->cart_rows)) {
-			$cart->associations->addChild('cart_rows');
-		}
+            if ($quantityToRemove === null || $line->quantity <= $quantityToRemove) {
+                $line->delete();
+            } else {
+                $line->quantity -= $quantityToRemove;
+                $line->date_add = Carbon::now();
+                $line->save();
+            }
 
-		$created = $this->prestashopService->request('POST', 'carts', [], $schema->asXML());
+            Cart::query()->whereKey($idCart)->update(['date_upd' => Carbon::now()]);
+        });
+    }
 
-		if (! isset($created->cart->id)) {
-			throw new RuntimeException('PrestaShop cart creation response does not contain cart id.');
-		}
+    public function getCart(int $idCart): ?Cart
+    {
+        return Cart::query()
+            ->with(['products.product.images', 'products.combination', 'order'])
+            ->find($idCart);
+    }
 
-		return (int) $created->cart->id;
-	}
+    private function upsertCartLine(
+        Cart $cart,
+        int $productId,
+        int $quantity,
+        array $context,
+        bool $increment = true
+    ): CartProduct {
+        $product = Product::query()->find($productId);
 
-	private function loadCartXml(int $cartId): SimpleXMLElement
-	{
-		$cartXml = $this->prestashopService->request('GET', 'carts/' . $cartId, ['display' => 'full']);
+        if (! $product) {
+            throw new RuntimeException('Product not found.');
+        }
 
-		if (! isset($cartXml->cart)) {
-			throw new RuntimeException('Unable to load cart from PrestaShop.');
-		}
+        if ((int) $product->active !== 1 || (bool) $product->available_for_order !== true) {
+            throw new RuntimeException('Product is not available for order.');
+        }
 
-		return $cartXml;
-	}
+        $idProductAttribute = (int) ($context['id_product_attribute'] ?? 0);
+        $idCustomization = (int) ($context['id_customization'] ?? 0);
+        $idAddressDelivery = array_key_exists('id_address_delivery', $context)
+            ? (int) $context['id_address_delivery']
+            : (int) $cart->id_address_delivery;
 
-	private function saveCartXml(int $cartId, SimpleXMLElement $cartXml): SimpleXMLElement
-	{
-		return $this->prestashopService->request('PUT', 'carts/' . $cartId, [], $cartXml->asXML());
-	}
+        $line = CartProduct::query()
+            ->where('id_cart', $cart->id_cart)
+            ->where('id_product', $productId)
+            ->where('id_product_attribute', $idProductAttribute)
+            ->where('id_customization', $idCustomization)
+            ->where('id_address_delivery', $idAddressDelivery)
+            ->lockForUpdate()
+            ->first();
 
-	private function ensureCartRowsNode(SimpleXMLElement $cart): void
-	{
-		if (! isset($cart->associations)) {
-			$cart->addChild('associations');
-		}
+        $minimumQuantity = $this->resolveMinimumQuantity($productId, $idProductAttribute);
+        $now = Carbon::now();
 
-		if (! isset($cart->associations->cart_rows)) {
-			$cart->associations->addChild('cart_rows');
-		}
-	}
+        if ($line) {
+            $newQuantity = $increment ? ($line->quantity + $quantity) : $quantity;
 
-	private function findCartRowIndexByProduct(int $productId, SimpleXMLElement $cartRows): ?int
-	{
-		foreach ($cartRows->cart_row as $index => $row) {
-			if ((int) $row->id_product === $productId) {
-				return (int) $index;
-			}
-		}
+            if ($newQuantity < $minimumQuantity) {
+                throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
+            }
 
-		return null;
-	}
+            $line->quantity = $newQuantity;
+            $line->date_add = $now;
+            $line->save();
+        } else {
+            if ($quantity < $minimumQuantity) {
+                throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
+            }
 
-	private function normalizeCart(SimpleXMLElement $cart): array
-	{
-		$items = [];
-		$totalQuantity = 0;
-		$subtotal = 0.0;
+            $line = CartProduct::query()->create([
+                'id_cart' => $cart->id_cart,
+                'id_product' => $productId,
+                'id_address_delivery' => $idAddressDelivery,
+                'id_shop' => (int) $cart->id_shop,
+                'id_product_attribute' => $idProductAttribute,
+                'id_customization' => $idCustomization,
+                'quantity' => $quantity,
+                'date_add' => $now,
+            ]);
+        }
 
-		if (isset($cart->associations) && isset($cart->associations->cart_rows)) {
-			foreach ($cart->associations->cart_rows->cart_row as $row) {
-				$productId = (int) $row->id_product;
-				$quantity = (int) $row->quantity;
-				$product = Product::query()->find($productId);
-				$unitPrice = (float) ($product?->price ?? 0);
+        $cart->date_upd = $now;
+        $cart->save();
 
-				$lineSubtotal = $unitPrice * $quantity;
+        return $line;
+    }
 
-				$items[] = [
-					'product_id' => $productId,
-					'product_attribute_id' => (int) ($row->id_product_attribute ?? 0),
-					'quantity' => $quantity,
-					'unit_price' => $unitPrice,
-					'line_subtotal' => round($unitPrice * $quantity, 2),
-                    '_price_note'  => 'base_price_only',
-				];
+    private function findLatestOpenCartByCustomer(int $customerId): ?Cart
+    {
+        return Cart::query()
+            ->where('id_customer', $customerId)
+            ->whereDoesntHave('order')
+            ->orderByDesc('id_cart')
+            ->first();
+    }
 
-				$totalQuantity += $quantity;
-				$subtotal += $lineSubtotal;
-			}
-		}
+    private function resolveMinimumQuantity(int $productId, int $idProductAttribute = 0): int
+    {
+        if ($idProductAttribute > 0) {
+            $attribute = ProductAttribute::query()
+                ->where('id_product_attribute', $idProductAttribute)
+                ->where('id_product', $productId)
+                ->first();
 
-		return [
-			'id' => (int) $cart->id,
-			'customer_id' => (int) $cart->id_customer,
-			'currency_id' => (int) $cart->id_currency,
-			'language_id' => (int) $cart->id_lang,
-			'shop_id' => (int) $cart->id_shop,
-			'items' => $items,
-			'total_quantity' => $totalQuantity,
-			'subtotal' => round($subtotal, 2),
-			'updated_at' => isset($cart->date_upd) ? (string) $cart->date_upd : null,
-		];
-	}
+            if ($attribute && (int) $attribute->minimal_quantity > 0) {
+                return (int) $attribute->minimal_quantity;
+            }
+        }
+
+        $product = Product::query()->find($productId);
+
+        if (! $product) {
+            return 1;
+        }
+
+        return max(1, (int) $product->minimal_quantity);
+    }
+
+    private function resolveCartDefaults(): array
+    {
+        return [
+            'id_shop' => (int) config('prestashop.default_shop_id', 1),
+            'id_shop_group' => (int) config('prestashop.default_shop_group_id', 1),
+            'id_currency' => (int) config('prestashop.default_currency_id', 1),
+            'id_lang' => (int) config('prestashop.default_lang_id', 1),
+        ];
+    }
+
+    private function normalizeCart(Cart $cart): array
+    {
+        $items = [];
+        $totalQuantity = 0;
+        $subtotal = 0.0;
+
+        foreach ($cart->products as $line) {
+            $basePrice = (float) ($line->product?->price ?? 0);
+            $attributeImpact = (float) ($line->combination?->price ?? 0);
+            $unitPrice = $basePrice + $attributeImpact;
+            $lineSubtotal = $unitPrice * (int) $line->quantity;
+
+            $items[] = [
+                'product_id' => (int) $line->id_product,
+                'product_attribute_id' => (int) $line->id_product_attribute,
+                'quantity' => (int) $line->quantity,
+                'unit_price' => round($unitPrice, 6),
+                'line_subtotal' => round($lineSubtotal, 2),
+                'name' => $line->product?->name ?? null,
+                'reference' => $line->product?->reference ?? null,
+                'image' => $line->product?->images?->first()?->id_image ?? null,
+            ];
+
+            $totalQuantity += (int) $line->quantity;
+            $subtotal += $lineSubtotal;
+        }
+
+        return [
+            'id' => (int) $cart->id_cart,
+            'customer_id' => (int) $cart->id_customer,
+            'currency_id' => (int) $cart->id_currency,
+            'language_id' => (int) $cart->id_lang,
+            'shop_id' => (int) $cart->id_shop,
+            'items' => $items,
+            'total_quantity' => $totalQuantity,
+            'subtotal' => round($subtotal, 2),
+            'is_ordered' => $cart->relationLoaded('order')
+                ? $cart->order->isNotEmpty()
+                : $cart->order()->exists(),
+            'updated_at' => $cart->date_upd?->toDateTimeString(),
+        ];
+    }
 }
