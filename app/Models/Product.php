@@ -192,6 +192,7 @@ class Product extends Model
     	return $this->belongsToMany(Cart::class, 'ps_cart_product', 'id_product', 'id_cart');
 	}
 
+	
 	public function orders() {
     	return $this->belongsToMany(Order::class, 'ps_order_detail', 'product_id', 'id_order');
 	}
