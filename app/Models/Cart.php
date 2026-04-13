@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany ;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -89,14 +90,26 @@ class Cart extends Model
         return $this->belongsTo(Customer::class, 'id_customer', 'id_customer');
     }
 
-    public function products(): HasMany
+    // To get products models of this cart directly
+    public function productModels(): BelongsToMany
+    {
+    return $this->belongsToMany(Product::class, 'ps_cart_product', 'id_cart', 'id_product')
+        ->withPivot(['id_product_attribute', 'id_customization', 'quantity', 'id_shop', 'id_address_delivery', 'date_add']);
+    }
+    
+    public function cartProducts(): HasMany
     {
         return $this->hasMany(CartProduct::class, 'id_cart', 'id_cart');
     }
 
     public function items(): HasMany
     {
-        return $this->products();
+        return $this->cartProducts();
+    }
+
+     public function cartRules(): BelongsToMany
+    {
+        return $this->belongsToMany(CartRule::class, 'ps_cart_cart_rule', 'id_cart', 'id_cart_rule');
     }
 
     public function order(): HasMany
