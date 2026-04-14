@@ -97,7 +97,7 @@ class Cart extends Model
         ->withPivot(['id_product_attribute', 'id_customization', 'quantity', 'id_shop', 'id_address_delivery', 'date_add']);
     }
     
-    public function cartProducts(): HasMany
+    public function products(): HasMany
     {
         return $this->hasMany(CartProduct::class, 'id_cart', 'id_cart');
     }

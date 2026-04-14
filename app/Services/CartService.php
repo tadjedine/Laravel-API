@@ -13,7 +13,13 @@ use RuntimeException;
 
 class CartService
 {
-    public function getOrCreateCart(int $customerId, array $context = []): array
+    private array $cartRelations = [
+        'products.product.images',
+        'products.combination',
+        'order',
+    ];
+
+    public function getOrCreateCart(int $customerId, array $context = []): Cart
     {
         $cart = $this->findLatestOpenCartByCustomer($customerId);
 
@@ -23,10 +29,10 @@ class CartService
 
         $cart->load(['products.product.images', 'products.combination', 'order']);
 
-        return $this->normalizeCart($cart);
+        return $this->loadCartGraph($cart);
     }
 
-    public function addItem(int $customerId, int $productId, int $quantity = 1, array $context = []): array
+    public function addItem(int $customerId, int $productId, int $quantity = 1, array $context = []): Cart
     {
         if ($quantity < 1) {
             throw new RuntimeException('Quantity must be at least 1.');
@@ -48,7 +54,7 @@ class CartService
 
         $cart->load(['products.product.images', 'products.combination', 'order']);
 
-        return $this->normalizeCart($cart);
+        return $this->loadCartGraph($cart);
     }
 
     public function updateItemQuantity(int $customerId, int $productId, int $quantity, array $context = []): array
@@ -234,6 +240,13 @@ class CartService
         return Cart::query()
             ->with(['products.product.images', 'products.combination', 'order'])
             ->find($idCart);
+    }
+
+    // ******************** Helper Methods *******************************
+
+    private function loadCartGraph(Cart $cart): Cart
+    {
+        return $cart->load($this->cartRelations);
     }
 
     private function upsertCartLine(
