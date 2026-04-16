@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\Cart\InvalidQuantityException;
 use App\Models\Cart;
 use App\Models\CartProduct;
 use App\Models\Product;
@@ -35,7 +36,7 @@ class CartService
     public function addItem(int $customerId, int $productId, int $quantity = 1, array $context = []): Cart
     {
         if ($quantity < 1) {
-            throw new RuntimeException('Quantity must be at least 1.');
+            throw new InvalidQuantityException();
         }
 
         $cart = DB::transaction(function () use ($customerId, $productId, $quantity, $context) {
@@ -57,7 +58,7 @@ class CartService
         return $this->loadCartGraph($cart);
     }
 
-    public function updateItemQuantity(int $customerId, int $productId, int $quantity, array $context = []): array
+    public function updateItemQuantity(int $customerId, int $productId, int $quantity, array $context = []): Cart
     {
         if ($quantity < 0) {
             throw new RuntimeException('Quantity cannot be negative.');
@@ -112,10 +113,10 @@ class CartService
 
         $cart->load(['products.product.images', 'products.combination', 'order']);
 
-        return $this->normalizeCart($cart);
+        return $this->loadCartGraph($cart);
     }
 
-    public function removeItem(int $customerId, int $productId, array $context = []): array
+    public function removeItem(int $customerId, int $productId, array $context = []): Cart
     {
         return $this->updateItemQuantity($customerId, $productId, 0, $context);
     }

@@ -104,7 +104,7 @@ class Cart extends Model
 
     public function items(): HasMany
     {
-        return $this->cartProducts();
+        return $this->products();
     }
 
      public function cartRules(): BelongsToMany

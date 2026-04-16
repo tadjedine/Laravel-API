@@ -13,3 +13,11 @@ php artisan make:model Inventory -m
 
 Packages:
 composer require "darkaonline/l5-swagger"
+
+Exceptions :
+******Cart
+NOCustomerFound
+CartNotFound
+
+Verifications :
+- Need to verify see with "quantity" and "date_add" for CartProduct table ----> CartService.php
