@@ -93,7 +93,7 @@ class CartService
             }
 
             if ($quantity === 0) {
-                $line->delete();
+                $line->deleteLine();
             } else {
                 $minimumQuantity = $this->resolveMinimumQuantity($productId, $idProductAttribute);
                 if ($quantity < $minimumQuantity) {
@@ -102,7 +102,15 @@ class CartService
 
                 $line->quantity = $quantity;
                 $line->date_add = Carbon::now();
-                $line->save();
+
+                //$line->save();
+                CartProduct::query()
+                ->where('id_cart', $line->id_cart)
+                ->where('id_product', $line->id_product)
+                ->where('id_product_attribute', $line->id_product_attribute)
+                ->where('id_customization', $line->id_customization)
+                ->where('id_address_delivery', $line->id_address_delivery)
+                ->update(['quantity' => $line->quantity, 'date_add' => $line->date_add]);
             }
 
             $lockedCart->date_upd = Carbon::now();
@@ -225,11 +233,18 @@ class CartService
             }
 
             if ($quantityToRemove === null || $line->quantity <= $quantityToRemove) {
-                $line->delete();
+                $line->deleteLine();
             } else {
                 $line->quantity -= $quantityToRemove;
                 $line->date_add = Carbon::now();
-                $line->save();
+               // $line->save();
+               CartProduct::query()
+                    ->where('id_cart', $line->id_cart)
+                    ->where('id_product', $line->id_product)
+                    ->where('id_product_attribute', $line->id_product_attribute)
+                    ->where('id_customization', $line->id_customization)
+                    ->where('id_address_delivery', $line->id_address_delivery)
+                    ->update(['quantity' => $line->quantity, 'date_add' => $line->date_add]);
             }
 
             Cart::query()->whereKey($idCart)->update(['date_upd' => Carbon::now()]);
@@ -294,7 +309,14 @@ class CartService
 
             $line->quantity = $newQuantity;
             $line->date_add = $now;
-            $line->save();
+            // $line->save();
+            CartProduct::query()
+                ->where('id_cart', $line->id_cart)
+                ->where('id_product', $line->id_product)
+                ->where('id_product_attribute', $line->id_product_attribute)
+                ->where('id_customization', $line->id_customization)
+                ->where('id_address_delivery', $line->id_address_delivery)
+                ->update(['quantity' => $line->quantity, 'date_add' => $line->date_add]);
         } else {
             if ($quantity < $minimumQuantity) {
                 throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
@@ -400,5 +422,15 @@ class CartService
                 : $cart->order()->exists(),
             'updated_at' => $cart->date_upd?->toDateTimeString(),
         ];
+    }
+
+    private function deleteLine($line)
+    {
+        CartProduct::where('id_cart', $line->id_cart)
+            ->where('id_product', $line->id_product)
+            ->where('id_product_attribute', $line->id_product_attribute)
+            ->where('id_customization', $line->id_customization)
+            ->where('id_address_delivery', $line->id_address_delivery)
+            ->delete();
     }
 }
