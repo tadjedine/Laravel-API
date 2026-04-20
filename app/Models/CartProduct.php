@@ -26,6 +26,8 @@ class CartProduct extends Model
 {
     protected $table = 'ps_cart_product';
 
+    protected $primaryKey = null;
+
     public $incrementing = false;
 
     public $timestamps = false;

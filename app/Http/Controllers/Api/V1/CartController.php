@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AddCartItemRequest;
-use App\Http\Requests\ClearCartItemRequest;
+use App\Http\Requests\CartItemRequest;
 use App\Http\Requests\GetOrCreateCartRequest;
 use App\Http\Resources\CartResource;
 use App\Services\CartService;
-use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
@@ -44,9 +43,16 @@ class CartController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(CartItemRequest $request, string $id)
     {
-        // To add the logic of updating a cart ( product quantity, other infos ...idk)
+        $cart = $this->cartService->updateItemQuantity(
+            $request->customerId(),
+            (int) $id,
+            $request->quantity(),
+            $request->context()
+        );
+
+        return new CartResource($cart);
     }
 
     /**
@@ -54,29 +60,35 @@ class CartController extends Controller
      */
     public function destroy(string $id)
     {
-        // $cart= $this->cartService->findLatestOpenCartByCustomer($id);
+        $cart = $this->cartService->getCart((int) $id);
 
-        // if(! $cart){
-        //     return response()->json(['message' => 'Product not found'], 404);
-        // }
+        if (! $cart) {
+            return response()->json([
+                'message' => 'Cart not found.',
+            ], 404);
+        }
 
-        // $customerId = $cart->customer()->id_customer;
-        // $productId = $cart->products()->id_customer;
+        // keeping the cart row, deleting only cart content
+        $cart->products()->delete();
 
-        $this->cartService->clearItems($id);
+        //  updating timestamp
+        $cart->date_upd = now();
+        $cart->save();
 
         return response()->noContent();
     }
 
-    // Delete a single cart line
-    public function clearItem(ClearCartItemRequest $request)
+    /**
+     * Delete a single cart line
+     */
+    public function clearItem(CartItemRequest $request)
     {
         $context = $request->context();
 
         $cart = $this->cartService->removeItem(
-            (int) $request['id_customer'],
-            (int) $request['id_product'],
-            $context
+            $request->customerId(),
+            $request->productId(),
+            $request->context(),
         );
 
         return new CartResource($cart);

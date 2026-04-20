@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -35,17 +34,20 @@ class AddCartItemRequest extends FormRequest
 
             // variant/combination
             'id_product_attribute' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
-                Rule::exists('ps_product_attribute', 'id_product_attribute')
-                    ->where(fn ($q) => $q->where('id_product', $this->input('id_product'))),
+                Rule::when(
+                    $this->input('id_product_attribute') > 0,
+                    Rule::exists('ps_product_attribute', 'id_product_attribute')
+                        ->where(fn ($q) => $q->where('id_product', $this->input('id_product')))
+                ),
             ],
 
             // cart context used by service
-            'id_customization' => ['required', 'integer', 'min:0'],
-            'id_address_delivery' => ['required', 'integer', 'min:0'],
-            'id_shop' => ['required', 'integer', 'min:1'],
+            'id_customization' => ['nullable', 'integer', 'min:0'],
+            'id_address_delivery' => ['nullable', 'integer', 'min:0'],
+            'id_shop' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
