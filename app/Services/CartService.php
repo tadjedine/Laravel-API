@@ -69,7 +69,7 @@ class CartService
             $cart = $this->findLatestOpenCartByCustomer($customerId);
 
             if (! $cart) {
-                throw new RuntimeException('No active cart found for this customer.');
+                throw new CartNotFoundException();
             }
 
             $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
@@ -94,7 +94,7 @@ class CartService
             }
 
             if ($quantity === 0) {
-                $line->deleteLine();
+                $this->deleteLine($line);
             } else {
                 $minimumQuantity = $this->resolveMinimumQuantity($productId, $idProductAttribute);
                 if ($quantity < $minimumQuantity) {

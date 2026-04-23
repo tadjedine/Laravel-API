@@ -1,10 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\V1\{
-    PostController,
-    ProductController,
-    CategoryController,
-    };
+use App\Http\Controllers\Api\V1\{ PostController, ProductController, CategoryController, };
+use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -35,8 +32,15 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('categories/root', [CategoryController::class, 'root']);
         // Route::get('categories/{id}/with-products', [CategoryController::class, 'showWithProducts']);
         Route::get('categories/hierarchy', [CategoryController::class, 'hierarchy']);
-    });
 
+        // Cart endpoints 
+        Route::post('cart', [CartController::class, 'index']);
+        Route::get('cart/{cartId}', [CartController::class, 'show']);
+        Route::post('cart/items', [CartController::class, 'store']);// add item
+        Route::put('cart/items/{productId}', [CartController::class, 'update']);
+        Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line 
+        Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+    });
 
 
 require __DIR__.'/auth.php';

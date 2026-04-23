@@ -21,8 +21,8 @@ class CartItemRequest extends FormRequest
     {
         $this->merge([
             'id_product_attribute' => (int) ($this->input('id_product_attribute') ?? 0),
-            'id_customization' => (int) ($this->input('id_customization') ?? 0),
-            'id_address_delivery' => (int) ($this->input('id_address_delivery') ?? 0),
+            'id_customization' => (int) ($this->input('id_customization')),
+            'id_address_delivery' => (int) ($this->input('id_address_delivery')),
         ]);
     }
 
@@ -39,38 +39,37 @@ class CartItemRequest extends FormRequest
 
             // product id comes from route parameter {id}
             'id_product_attribute' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
                 
                 Rule::when((int) $this->input('id_product_attribute') > 0, [
                     Rule::exists('ps_product_attribute', 'id_product_attribute')
-                        ->where(fn ($q) => $q->where('id_product', (int) $this->route('id')))
+                        ->where(fn ($q) => $q->where('id_product', (int) $this->route('productId')))
                 ]),
             ],
 
-            'id_customization' => ['required', 'integer', 'min:0'],
-            'id_address_delivery' => ['required', 'integer', 'min:0'],
+            'id_customization' => ['nullable', 'integer', 'min:0'],
+            'id_address_delivery' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
-
-    public function customerId(): int
+    public function customerId()
     {
-        return (int) $this->validated('id_customer');
+        return $this->validated('id_customer');
     }
 
-    public function productId(): int
+    public function quantity()
     {
-        return (int) $this->validated('id_product');
+        return $this->validated('quantity');
     }
-
+    
     public function context(): array
     {
         return [
             'id_product_attribute' => (int) $this->validated('id_product_attribute', 0),
             'id_customization' => (int) $this->validated('id_customization', 0),
-            'id_address_delivery' => (int) $this->validated('id_address_delivery', 0),
+            'id_address_delivery' => (int) $this->validated('id_address_delivery'),
         ];
     }
 }

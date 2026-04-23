@@ -18,6 +18,9 @@ Exceptions :
 ******Cart
 NOCustomerFound
 CartNotFound
+InvalidQuantity,
+ ProductUnavailable
 
+ 
 Verifications :
 - Need to verify see with "quantity" and "date_add" for CartProduct table ----> CartService.php

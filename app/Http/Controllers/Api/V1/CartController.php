@@ -50,11 +50,11 @@ class CartController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(CartItemRequest $request, string $id)
+    public function update(CartItemRequest $request, $productId)
     {
         $cart = $this->cartService->updateItemQuantity(
             $request->customerId(),
-            (int) $id,
+            (int) $productId,
             $request->quantity(),
             $request->context()
         );
@@ -82,12 +82,12 @@ class CartController extends Controller
     /**
      * Delete a single cart line
      */
-    public function clearItem(CartItemRequest $request, int $productId)
+    public function clearItem(CartItemRequest $request, $productId)
     {
 
         $cart = $this->cartService->removeItem(
             $request->customerId(),
-            $request->productId(),
+            $productId,
             $request->context(),
         );
 
