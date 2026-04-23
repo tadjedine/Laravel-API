@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\Cart\CartNotFoundException;
 use App\Exceptions\Cart\InvalidQuantityException;
 use App\Models\Cart;
 use App\Models\CartProduct;
@@ -256,6 +257,17 @@ class CartService
         return Cart::query()
             ->with(['products.product.images', 'products.combination', 'order'])
             ->find($idCart);
+    }
+
+    public function getCartOrFail(int $idCart): Cart
+    {
+        $cart = $this->getCart($idCart);
+
+        if (! $cart) {
+            throw new CartNotFoundException($idCart);
+        }
+
+        return $cart;
     }
 
     // ******************** Helper Methods *******************************

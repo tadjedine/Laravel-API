@@ -40,6 +40,13 @@ class CartController extends Controller
                 ->setStatusCode(201);
     }
 
+    public function show(string $cartId)
+    {
+        $cart = $this->cartService->getCartOrFail((int) $cartId);
+
+        return new CartResource($cart);
+    }
+
     /**
      * Update the specified resource in storage.
      */
@@ -56,17 +63,11 @@ class CartController extends Controller
     }
 
     /**
-     * Delete the whole cart content
+     * Delete the whole cart's content
      */
-    public function destroy(string $id)
+    public function destroy(string $cartId)
     {
-        $cart = $this->cartService->getCart((int) $id);
-
-        if (! $cart) {
-            return response()->json([
-                'message' => 'Cart not found.',
-            ], 404);
-        }
+        $cart = $this->cartService->getCartOrFail((int) $cartId);
 
         // keeping the cart row, deleting only cart content
         $cart->products()->delete();
@@ -81,9 +82,8 @@ class CartController extends Controller
     /**
      * Delete a single cart line
      */
-    public function clearItem(CartItemRequest $request)
+    public function clearItem(CartItemRequest $request, int $productId)
     {
-        $context = $request->context();
 
         $cart = $this->cartService->removeItem(
             $request->customerId(),
