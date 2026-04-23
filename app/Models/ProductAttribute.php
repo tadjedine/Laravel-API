@@ -6,8 +6,12 @@
 
 namespace App\Models;
 
+use App\Models\CartProduct;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class PsProductAttribute
@@ -33,7 +37,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsProductAttribute extends Model
+class ProductAttribute extends Model
 {
 	protected $table = 'ps_product_attribute';
 	protected $primaryKey = 'id_product_attribute';
@@ -72,4 +76,15 @@ class PsProductAttribute extends Model
 		'low_stock_alert',
 		'available_date'
 	];
+
+
+	public function product(): BelongsTo
+	{
+    return $this->belongsTo(Product::class, 'id_product', 'id_product');
+	}
+
+	public function cartProducts(): HasMany
+	{
+    return $this->hasMany(CartProduct::class, 'id_product_attribute', 'id_product_attribute');
+	}
 }

@@ -39,7 +39,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsAddress extends Model
+class Address extends Model
 {
 	protected $table = 'ps_address';
 	protected $primaryKey = 'id_address';
@@ -83,4 +83,5 @@ class PsAddress extends Model
 		'active',
 		'deleted'
 	];
+	
 }

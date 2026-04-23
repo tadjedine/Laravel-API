@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class PsCategoryLang
- * 
+ *
  * @property int $id_category
  * @property int $id_shop
  * @property int $id_lang
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsCategoryLang extends Model
+class CategoryLang extends Model
 {
 	protected $table = 'ps_category_lang';
 	public $incrementing = false;

@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\Image;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class PsProduct
@@ -188,10 +189,23 @@ class Product extends Model
     	return $this->belongsToMany(Category::class, 'ps_category_product', 'id_product', 'id_category');
 	}
 
+	public function productAttribute() : HasMany
+	{
+		return $this->hasMany(ProductAttribute::class);
+	}
+
+	//Cart line items that reference this product.
+	public function cartProducts(): HasMany
+	{
+		return $this->hasMany(CartProduct::class, 'id_product', 'id_product');
+	}
+
+
 	public function carts() {
     	return $this->belongsToMany(Cart::class, 'ps_cart_product', 'id_product', 'id_cart');
 	}
 
+	
 	public function orders() {
     	return $this->belongsToMany(Order::class, 'ps_order_detail', 'product_id', 'id_order');
 	}
