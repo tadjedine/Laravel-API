@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $quantity
  * @property Carbon $date_add
  */
-class CartProduct extends Model
+class CartProduct extends PrestashopModel
 {
     protected $table = 'ps_cart_product';
 

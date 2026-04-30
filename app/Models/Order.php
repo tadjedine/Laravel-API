@@ -62,7 +62,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Carbon $date_upd
  * @property string|null $note
  */
-class Order extends Model
+class Order extends PrestashopModel
 {
     protected $table = 'ps_orders';
 

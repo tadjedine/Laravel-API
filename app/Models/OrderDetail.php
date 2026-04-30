@@ -63,7 +63,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $total_refunded_tax_excl
  * @property float $total_refunded_tax_incl
  */
-class OrderDetail extends Model
+class OrderDetail extends PrestashopModel
 {
     protected $table = 'ps_order_detail';
 

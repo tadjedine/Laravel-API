@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class PsCartRule
- * 
+ *
  * @property int $id_cart_rule
  * @property int $id_customer
  * @property Carbon $date_from
@@ -50,7 +50,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class CartRule extends Model
+class CartRule extends PrestashopModel
 {
 	protected $table = 'ps_cart_rule';
 	protected $primaryKey = 'id_cart_rule';

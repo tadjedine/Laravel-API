@@ -11,7 +11,7 @@ use Reliese\Coders\Model\Relations\BelongsTo;
 
 /**
  * Class PsImage
- * 
+ *
  * @property int $id_image
  * @property int $id_product
  * @property int $position
@@ -19,7 +19,7 @@ use Reliese\Coders\Model\Relations\BelongsTo;
  *
  * @package App\Models
  */
-class ProductImage extends Model
+class ProductImage extends PrestashopModel
 {
 	protected $table = 'ps_image';
 	protected $primaryKey = 'id_image';
@@ -71,5 +71,5 @@ class ProductImage extends Model
             'cart'     => $this->getUrl('cart_default'),
         ];
     }
-	
+
 }
