@@ -40,13 +40,14 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): Customer
     {
         $this->ensureIsNotRateLimited();
 
         $customer = Customer::where('email', $this->input('email'))
             ->where('active', 1)
             ->where('deleted', 0)
+            ->where('is_guest', 0)
             ->first();
 
         $verifier = app(PrestashopPasswordVerifierService::class);
@@ -59,7 +60,7 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
-
+        return $customer;
         // Log in for SPA cookie sessions; harmless for token-only clients.
         //Auth::guard('web')->login($customer, remember: false);
 

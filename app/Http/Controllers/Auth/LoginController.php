@@ -18,9 +18,9 @@ class LoginController extends Controller
      */
     public function store(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
 
-        $customer = $request->user();
+
+        $customer = $request->authenticate();
         $token = $customer->createToken('api')->plainTextToken;
 
         return response()->json([
@@ -42,9 +42,9 @@ class LoginController extends Controller
         }
 
         // Cookie session client
-        Auth::guard('web')->logout();
-        $request->session()?->invalidate();
-        $request->session()?->regenerateToken();
+//        Auth::guard('web')->logout();
+//        $request->session()?->invalidate();
+//        $request->session()?->regenerateToken();
 
         return response()->noContent();
     }

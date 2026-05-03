@@ -43,7 +43,7 @@ class RegisteredUserController extends Controller
             'birthday'         => $data['birthday'] ?? null,
             'newsletter'       => !empty($data['newsletter']) ? 1 : 0,
             'optin'            => 0,
-            'secure_key'       => md5(Str::uuid()->toString()), //Need to understand more this line later
+            'secure_key'       => md5(Str::uuid()->toString()),
             'active'           => 1,
             'is_guest'         => false,
             'deleted'          => false,
