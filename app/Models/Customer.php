@@ -54,7 +54,7 @@ class Customer extends Authenticatable
 {
     use HasApiTokens;
 
-    protected $connection= 'prestashop';
+//    protected $connection= 'prestashop';
 
 	protected $table = 'ps_customer';
 	protected $primaryKey = 'id_customer';

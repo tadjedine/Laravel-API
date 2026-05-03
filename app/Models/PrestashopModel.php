@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class PrestashopModel extends Model
 {
-    protected $connection= 'prestashop';
+    protected $connection= 'mysql';
     public $timestamps = false;
 }

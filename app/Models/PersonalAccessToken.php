@@ -7,9 +7,6 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 class PersonalAccessToken extends SanctumPersonalAccessToken
 {
-    /**
-     * Force Sanctum tokens to always be stored in the main app database,
-     * not the prestashop database (where the Customer model lives).
-     */
+    protected $table = 'laravel_personal_access_tokens';
     protected $connection = 'mysql';
 }
