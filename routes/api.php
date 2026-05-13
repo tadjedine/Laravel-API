@@ -51,6 +51,12 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::put('cart/items/{productId}', [CartController::class, 'update']);
         Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
         Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+
+        // Cart Rule (voucher) endpoints
+        Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
+        Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
+        Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
+
     });
 
 
