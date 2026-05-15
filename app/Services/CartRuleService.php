@@ -99,7 +99,6 @@ class CartRuleService
             CartCartRule::query()->create([
                 'id_cart'          => $lockedCart->id_cart,
                 'id_cart_rule'     => $rule->id_cart_rule,
-                'id_order_invoice' => 0,
             ]);
 
             $lockedCart->date_upd = Carbon::now();

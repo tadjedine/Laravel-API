@@ -17,13 +17,11 @@ class CartCartRule extends PrestashopModel
     protected $casts = [
         'id_cart'          => 'int',
         'id_cart_rule'     => 'int',
-        'id_order_invoice' => 'int',
     ];
 
     protected $fillable = [
         'id_cart',
         'id_cart_rule',
-        'id_order_invoice',
     ];
 
     public function cart(): BelongsTo

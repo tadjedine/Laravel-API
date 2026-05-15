@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-class CartRuleCountry extends PrestashopModel
+class CartRuleCarrier extends PrestashopModel
 {
-    protected $table = 'ps_cart_rule_country';
+    protected $table = 'ps_cart_rule_carrier';
     public $incrementing = false;
     public $timestamps = false;
 
-    protected $fillable = ['id_cart_rule', 'id_country'];
+    protected $fillable = ['id_cart_rule', 'id_carrier'];
 }
