@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\Image;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -214,5 +215,38 @@ class Product extends PrestashopModel
 	{
 		return $this->hasMany(ProductImage::class,'id_product')
 					->OrderBy('position');
+	}
+
+	public function lang(): HasOne
+	{
+		return $this->hasOne(ProductLang::class, 'id_product', 'id_product')
+					->where('id_lang', 1)
+					->where('id_shop', 1);
+	}
+
+	public function coverImage(): HasOne
+	{
+		return $this->hasOne(ProductImage::class, 'id_product', 'id_product')
+					->where('cover', 1);
+	}
+
+	public function getNameAttribute(): ?string
+	{
+		return $this->lang?->name;
+	}
+
+	public function getDescriptionAttribute(): ?string
+	{
+		return $this->lang?->description;
+	}
+
+	public function getDescriptionShortAttribute(): ?string
+	{
+		return $this->lang?->description_short;
+	}
+
+	public function getLinkRewriteAttribute(): ?string
+	{
+		return $this->lang?->link_rewrite;
 	}
 }

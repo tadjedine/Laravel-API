@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsProductLang extends Model
+class ProductLang extends Model
 {
 	protected $table = 'ps_product_lang';
 	public $incrementing = false;

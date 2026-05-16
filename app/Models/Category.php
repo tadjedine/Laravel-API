@@ -75,4 +75,21 @@ class Category extends PrestashopModel
 	public function children() {
     	return $this->hasMany(Category::class, 'id_parent', 'id_category');
 	}
+
+	public function lang()
+	{
+		return $this->hasOne(CategoryLang::class, 'id_category', 'id_category')
+					->where('id_lang', 1)
+					->where('id_shop', 1);
+	}
+
+	public function getNameAttribute(): ?string
+	{
+		return $this->lang?->name;
+	}
+
+	public function getLinkRewriteAttribute(): ?string
+	{
+		return $this->lang?->link_rewrite;
+	}
 }

@@ -15,17 +15,19 @@ class ProductRepository{
         //     now()->addHours(2),
         //     fn() => $this->prestaShopService->getProducts($filters)
         // );
-        $query = Product::query();
+        $query = Product::with(['lang', 'coverImage']);
 
         if (isset($filters['category'])) {
             $query->where('id_category_default', $filters['category']);
         }
 
         if (isset($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
+            $query->whereHas('lang', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%');
+            });
         }
 
-        return $query->paginate($filters['per_page'] ?? 15);        
+        return $query->where('active', 1)->paginate($filters['per_page'] ?? 15);        
     }
     
     public function getById(int $id)
@@ -57,7 +59,9 @@ class ProductRepository{
     public function getByCategory(int $categoryId, array $filters = []): LengthAwarePaginator
     {
     
-        return Product::where('id_category_default', $categoryId)
+        return Product::with(['lang', 'coverImage'])
+            ->where('id_category_default', $categoryId)
+            ->where('active', 1)
             ->paginate($filters['per_page'] ?? 15);
     }
 

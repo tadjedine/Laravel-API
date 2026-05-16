@@ -10,13 +10,15 @@ class CategoryRepository{
     public function getAll(array $filters = []): LengthAwarePaginator
         {
         
-        $query = Category::query();
+        $query = Category::with('lang');
 
         if (isset($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
+            $query->whereHas('lang', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%');
+            });
         }
 
-        return $query->paginate($filters['per_page'] ?? 15);        
+        return $query->where('active', 1)->paginate($filters['per_page'] ?? 15);        
     }
     
     public function getById(int $id)
@@ -47,15 +49,19 @@ class CategoryRepository{
 
     public function search(string $query, array $filters = []): LengthAwarePaginator
     {
-        return Category::where('name', 'like', '%' . $query . '%')
-            ->orWhere('description', 'like', '%' . $query . '%')
+        return Category::with('lang')
+            ->whereHas('lang', function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                  ->orWhere('description', 'like', '%' . $query . '%');
+            })
             ->where('active', 1)
             ->paginate($filters['per_page'] ?? 15);
     }
 
     public function getRootCategories(array $filters = []): LengthAwarePaginator
     {
-        return Category::where('is_root_category', true)
+        return Category::with('lang')
+            ->where('is_root_category', true)
             ->where('active', 1)
             ->paginate($filters['per_page'] ?? 15);
     }
