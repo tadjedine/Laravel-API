@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Customer;
+use App\Services\Auth\PrestashopPasswordVerifierService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -38,19 +40,31 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): Customer
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        $customer = Customer::where('email', $this->input('email'))
+            ->where('active', 1)
+            ->where('deleted', 0)
+            ->where('is_guest', 0)
+            ->first();
 
+        $verifier = app(PrestashopPasswordVerifierService::class);
+
+        if (! $customer || ! $verifier->verify($customer, (string) $this->input('password'))) {
+            RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
 
         RateLimiter::clear($this->throttleKey());
+        return $customer;
+        // Log in for SPA cookie sessions; harmless for token-only clients.
+        //Auth::guard('web')->login($customer, remember: false);
+
+       // $this->setUserResolver(fn () => $customer);
     }
 
     /**
@@ -81,6 +95,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower((string)$this->input('email')).'|'.$this->ip());
     }
 }

@@ -19,6 +19,7 @@ class CartService
         'products.product.images',
         'products.combination',
         'order',
+        'CartRules.langs'
     ];
 
     public function getOrCreateCart(int $customerId, array $context = []): Cart
@@ -420,6 +421,17 @@ class CartService
             $subtotal += $lineSubtotal;
         }
 
+        $subtotal = round($subtotal, 2);
+
+        $discountSummary    = null;
+        $totalAfterDiscount = $subtotal;
+
+        if ($cart->relationLoaded('cartRules') && $cart->cartRules->isNotEmpty()) {
+            $service            = app(CartRuleService::class);
+            $discountSummary    = $service->computeDiscount($cart);
+            $totalAfterDiscount = $discountSummary['subtotal_after_discount'];
+        }
+
         return [
             'id' => (int) $cart->id_cart,
             'customer_id' => (int) $cart->id_customer,
@@ -428,7 +440,9 @@ class CartService
             'shop_id' => (int) $cart->id_shop,
             'items' => $items,
             'total_quantity' => $totalQuantity,
-            'subtotal' => round($subtotal, 2),
+            'subtotal' => $subtotal,
+            'discount_summary' => $discountSummary,
+            'total_after_discount' => round($totalAfterDiscount, 2),
             'is_ordered' => $cart->relationLoaded('order')
                 ? $cart->order->isNotEmpty()
                 : $cart->order()->exists(),

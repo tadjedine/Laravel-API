@@ -8,10 +8,12 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Class PsCustomer
- * 
+ *
  * @property int $id_customer
  * @property int $id_shop_group
  * @property int $id_shop
@@ -48,8 +50,12 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class Customer extends Model
+class Customer extends Authenticatable
 {
+    use HasApiTokens;
+
+//    protected $connection= 'prestashop';
+
 	protected $table = 'ps_customer';
 	protected $primaryKey = 'id_customer';
 	public $timestamps = false;
@@ -78,6 +84,8 @@ class Customer extends Model
 	];
 
 	protected $hidden = [
+        'passwd',
+        'secure_key',
 		'reset_password_token'
 	];
 
@@ -116,7 +124,14 @@ class Customer extends Model
 		'reset_password_validity'
 	];
 
-	public function orders() {
+
+    public function getAuthPassword(): string
+    {
+        return $this->passwd;
+    }
+
+
+    public function orders() {
     	return $this->hasMany(Order::class, 'id_customer');
 	}
 

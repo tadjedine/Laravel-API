@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class PsCategory
- * 
+ *
  * @property int $id_category
  * @property int $id_parent
  * @property int $id_shop_default
@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class Category extends Model
+class Category extends PrestashopModel
 {
 	protected $table = 'ps_category';
 	protected $primaryKey = 'id_category';
@@ -63,7 +63,7 @@ class Category extends Model
 		'is_root_category'
 	];
 
-	public function products() 
+	public function products()
 	{
 		return $this->belongsToMany(Product::class, 'ps_category_product', 'id_category', 'id_product');
 	}

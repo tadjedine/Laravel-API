@@ -49,7 +49,7 @@ return [
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
+            'database' => env('DB_DATABASE', 'prestashop'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
@@ -63,6 +63,20 @@ return [
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
+
+//        'prestashop' => [
+//            'driver' => 'mysql',
+//            'host' => env('PRESTASHOP_DB_HOST', '127.0.0.1'),
+//            'port' => env('PRESTASHOP_DB_PORT', '3306'),
+//            'database' => env('PRESTASHOP_DB_DATABASE', 'prestashop'),
+//            'username' => env('PRESTASHOP_DB_USERNAME', 'root'),
+//            'password' => env('PRESTASHOP_DB_PASSWORD', ''),
+//            'charset' => 'utf8mb4',
+//            'collation' => 'utf8mb4_unicode_ci',
+//            'prefix' => '',
+//            'strict' => true,
+//            'engine' => null,
+//        ],
 
         'mariadb' => [
             'driver' => 'mariadb',

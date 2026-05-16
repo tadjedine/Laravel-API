@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class PsProduct
- * 
+ *
  * @property int $id_product
  * @property int|null $id_supplier
  * @property int|null $id_manufacturer
@@ -74,7 +74,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @package App\Models
  */
-class Product extends Model
+class Product extends PrestashopModel
 {
 	protected $table = 'ps_product';
 	protected $primaryKey = 'id_product';
@@ -205,7 +205,7 @@ class Product extends Model
     	return $this->belongsToMany(Cart::class, 'ps_cart_product', 'id_product', 'id_cart');
 	}
 
-	
+
 	public function orders() {
     	return $this->belongsToMany(Order::class, 'ps_order_detail', 'product_id', 'id_order');
 	}

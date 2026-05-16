@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class PsProductAttribute
- * 
+ *
  * @property int $id_product_attribute
  * @property int $id_product
  * @property string|null $reference
@@ -37,7 +37,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @package App\Models
  */
-class ProductAttribute extends Model
+class ProductAttribute extends PrestashopModel
 {
 	protected $table = 'ps_product_attribute';
 	protected $primaryKey = 'id_product_attribute';

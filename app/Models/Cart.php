@@ -36,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Carbon $date_upd
  * @property string|null $checkout_session_data
  */
-class Cart extends Model
+class Cart extends PrestashopModel
 {
     protected $table = 'ps_cart';
 
@@ -96,7 +96,7 @@ class Cart extends Model
     return $this->belongsToMany(Product::class, 'ps_cart_product', 'id_cart', 'id_product')
         ->withPivot(['id_product_attribute', 'id_customization', 'quantity', 'id_shop', 'id_address_delivery', 'date_add']);
     }
-    
+
     public function products(): HasMany
     {
         return $this->hasMany(CartProduct::class, 'id_cart', 'id_cart');
