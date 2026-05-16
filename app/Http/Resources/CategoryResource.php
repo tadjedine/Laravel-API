@@ -17,6 +17,7 @@ class CategoryResource extends JsonResource
         return[
             'id' => $this->id_category,
             'name' => $this->name ?? 'Unnamed Category',
+            'slug' => $this->link_rewrite ?? 'category-' . $this->id_category,
             'parent_id' => $this->id_parent,
             'active' => (bool) $this->active,
             'position' => $this->position,
