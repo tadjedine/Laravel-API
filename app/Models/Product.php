@@ -190,6 +190,11 @@ class Product extends PrestashopModel
     	return $this->belongsToMany(Category::class, 'ps_category_product', 'id_product', 'id_category');
 	}
 
+	public function defaultCategory()
+	{
+		return $this->belongsTo(Category::class, 'id_category_default', 'id_category');
+	}
+
 	public function productAttribute() : HasMany
 	{
 		return $this->hasMany(ProductAttribute::class);

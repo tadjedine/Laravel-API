@@ -21,6 +21,12 @@ class ProductRepository{
             $query->where('id_category_default', $filters['category']);
         }
 
+        if (isset($filters['category_slug'])) {
+            $query->whereHas('defaultCategory.lang', function ($q) use ($filters) {
+                $q->where('link_rewrite', $filters['category_slug']);
+            });
+        }
+
         if (isset($filters['search'])) {
             $query->whereHas('lang', function ($q) use ($filters) {
                 $q->where('name', 'like', '%' . $filters['search'] . '%');
