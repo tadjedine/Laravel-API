@@ -33,16 +33,18 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::prefix('v1')->group(function () {
 
         Route::apiResource('products', ProductController::class);
-        Route::apiResource('categories', CategoryController::class);
 
         // Custom endpoints for products
         Route::get('products/{id}/images', [ProductController::class, 'getImages']);
         Route::get('products/{productId}/images/{imageId}', [ProductController::class, 'getImage']);
 
-        // Custom endpoints for categories
+        // Custom endpoints for categories (must be before apiResource to avoid {id} conflict)
         Route::get('categories/root', [CategoryController::class, 'root']);
+        Route::get('categories/main', [CategoryController::class, 'mainCategories']);
         // Route::get('categories/{id}/with-products', [CategoryController::class, 'showWithProducts']);
         Route::get('categories/hierarchy', [CategoryController::class, 'hierarchy']);
+
+        Route::apiResource('categories', CategoryController::class);
 
         // Cart endpoints
         Route::post('cart', [CartController::class, 'index']);

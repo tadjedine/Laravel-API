@@ -98,4 +98,11 @@ class CategoryController extends Controller
 
         return response()->json($hierarchy);
     }
+
+    public function mainCategories()
+    {
+        $categories = $this->categoryService->getMainCategories();
+
+        return CategoryResource::collection($categories);
+    }
 }

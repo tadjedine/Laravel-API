@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Category;
 use App\Repositories\CategoryRepository;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 // use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -31,6 +32,16 @@ class CategoryService
         return $category;
     }
 
+    // Categories to be displayed in the home page (id_parent = 2)
+    public function getMainCategories():Collection
+    {
+        $query = Category::with('lang')
+                ->where('active',1)
+                ->where('id_parent', 2);
+
+        return $query->get();
+    
+    }
     public function getRootCategories(array $filters = [])
     {
         return $this->categoryRepository->getRootCategories($filters);
