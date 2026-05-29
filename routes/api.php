@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{CartRuleController, PostController, ProductController, CategoryController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, PostController, ProductController, CategoryController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +58,11 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
         Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
         Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
+
+        // Address endpoints (authenticated)
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::apiResource('addresses', AddressController::class);
+        });
 
     });
 

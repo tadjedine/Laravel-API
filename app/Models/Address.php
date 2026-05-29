@@ -83,5 +83,17 @@ class Address extends Model
 		'active',
 		'deleted'
 	];
+
+
+	public function customer()
+	{
+		return $this->belongsTo(Customer::class, 'id_customer', 'id_customer');
+	}
+
+	public function country()
+	{
+		return $this->belongsTo(Country::class, 'id_country', 'id_country');
+	}
+    
 	
 }
