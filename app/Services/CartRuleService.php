@@ -188,16 +188,39 @@ class CartRuleService
         $giftProducts    = [];
         $rulesApplied    = [];
 
+        // Pre-compute per-product line totals for product-specific discounts
+        $productLineTotals = $this->computeProductLineTotals($cart);
+
         foreach ($rules as $rule) {
-            $discountAmount = 0.0;
-            $langName       = $this->resolveLangName($rule, $idLang);
+            $discountAmount    = 0.0;
+            $langName          = $this->resolveLangName($rule, $idLang);
+            $reductionProduct  = (int) $rule->reduction_product;
 
             if ((float) $rule->reduction_percent > 0) {
-                $discountAmount   = round(($rule->reduction_percent / 100) * $currentSubtotal, 2);
-                $currentSubtotal  = max(0.0, $currentSubtotal - $discountAmount);
-                $totalDiscount   += $discountAmount;
+                if ($reductionProduct > 0) {
+                    // Product-specific: apply % only to the targeted product's line total
+                    $productTotal   = $productLineTotals[$reductionProduct] ?? 0.0;
+                    $discountAmount = round(($rule->reduction_percent / 100) * $productTotal, 2);
+                    // Cap: don't discount more than the remaining subtotal
+                    $discountAmount  = min($discountAmount, $currentSubtotal);
+                } else {
+                    // Whole cart (reduction_product = 0): existing behavior
+                    $discountAmount = round(($rule->reduction_percent / 100) * $currentSubtotal, 2);
+                }
+
+                $currentSubtotal = max(0.0, $currentSubtotal - $discountAmount);
+                $totalDiscount  += $discountAmount;
+
             } elseif ((float) $rule->reduction_amount > 0) {
-                $discountAmount  = min((float) $rule->reduction_amount, $currentSubtotal);
+                if ($reductionProduct > 0) {
+                    // Product-specific: cap the fixed amount to the product's line total
+                    $productTotal   = $productLineTotals[$reductionProduct] ?? 0.0;
+                    $discountAmount = min((float) $rule->reduction_amount, $productTotal, $currentSubtotal);
+                } else {
+                    // Whole cart: existing behavior
+                    $discountAmount = min((float) $rule->reduction_amount, $currentSubtotal);
+                }
+
                 $currentSubtotal = max(0.0, $currentSubtotal - $discountAmount);
                 $totalDiscount  += $discountAmount;
             }
@@ -220,6 +243,7 @@ class CartRuleService
                 'discount_amount' => $discountAmount,
                 'free_shipping'   => (bool) $rule->free_shipping,
                 'gift_product_id' => (int) $rule->gift_product > 0 ? (int) $rule->gift_product : null,
+                'reduction_product' => $reductionProduct > 0 ? $reductionProduct : null,
             ];
         }
 
@@ -260,6 +284,27 @@ class CartRuleService
         return (float) ($rows ?? 0.0);
     }
 
+    /**
+     * Compute the line total (price × quantity) for each product in the cart.
+     * Returns an associative array: [ product_id => line_total ]
+     */
+    private function computeProductLineTotals(Cart $cart): array
+    {
+        $rows = DB::table('ps_cart_product as cp')
+            ->join('ps_product as p', 'p.id_product', '=', 'cp.id_product')
+            ->where('cp.id_cart', $cart->id_cart)
+            ->selectRaw('cp.id_product, SUM(p.price * cp.quantity) as line_total')
+            ->groupBy('cp.id_product')
+            ->get();
+
+        $totals = [];
+        foreach ($rows as $row) {
+            $totals[(int) $row->id_product] = (float) $row->line_total;
+        }
+
+        return $totals;
+    }
+
     private function freshCart(int $cartId): Cart
     {
         return Cart::query()
@@ -276,3 +321,4 @@ class CartRuleService
         return $lang?->name ?? $rule->code;
     }
 }
+
