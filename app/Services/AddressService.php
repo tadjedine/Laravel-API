@@ -30,7 +30,7 @@ class AddressService{
 
     public function createAddress(int $id_customer, array $data): Address
     {
-        Customer::where('id_customer', $id_customer)->firstOrFail();
+        Customer::findOrFail($id_customer);
 
         $now = Carbon::now();
 
@@ -49,7 +49,8 @@ class AddressService{
 
     public function updateAddress(int $addressId, int $customerId, array $data): Address
     {
-        $address = Address::where('id_customer', $customerId)
+        $address = Address::query()
+            ->where('id_customer', $customerId)
             ->where('id_address', $addressId)
             ->where('active', 1)
             ->where('deleted', 0)
@@ -76,7 +77,8 @@ class AddressService{
 
     public function deleteAddress(int $id_address, int $id_customer)
     {
-        return Address::where("id_customer", $id_customer)
+        return Address::query()
+                    ->where("id_customer", $id_customer)
                     ->where("id_address", $id_address)
                     ->update(["deleted"=> 1]);
     }

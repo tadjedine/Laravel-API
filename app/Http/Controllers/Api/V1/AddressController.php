@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAddressRequest;
+use App\Http\Requests\UpdateAddressRequest;
 use App\Http\Resources\AddressResource;
 use App\Services\AddressService;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class AddressController extends Controller
     /**
      * Update an existing address.
      */
-    public function update(StoreAddressRequest $request, int $id)
+    public function update(UpdateAddressRequest $request, int $id)
     {
         $address = $this->addressService->updateAddress(
             $id,

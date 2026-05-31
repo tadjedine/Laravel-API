@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\Cart\CartEmptyException;
 use App\Exceptions\Cart\CartNotFoundException;
 use App\Exceptions\Cart\InvalidQuantityException;
 use App\Models\Cart;
@@ -271,6 +272,50 @@ class CartService
         return $cart;
     }
 
+    
+    /**
+     * General check for the cart before moving to checkout.
+     * Returns a collection of errors (empty = cart is valid).
+     */
+    public function validateForCheckout(Cart $cart): \Illuminate\Support\Collection
+    {
+        $errors = collect();
+
+        // Cart must not already be ordered
+        if ($cart->order()->exists()) {
+            $errors->push(['type' => 'already_ordered', 'message' => 'This cart has already been converted to an order.']);
+            return $errors;
+        }
+
+        // Cart must not be empty
+        if (!$cart->items()->exists()) {
+            $errors->push(['type' => 'empty_cart', 'message' => "Can't checkout an empty cart."]);
+            return $errors;
+        }
+
+        // Validate each product line
+        foreach ($cart->productModels as $product) {
+            $productId = (int) $product->id_product;
+            $quantity = (int) $product->pivot->quantity;
+            $attributeId = (int) ($product->pivot->id_product_attribute ?? 0);
+
+            if ((int) $product->active !== 1) {
+                $errors->push(['type' => 'product_inactive', 'message' => "Product {$productId} is no longer active."]);
+            }
+
+            if (!$product->available_for_order) {
+                $errors->push(['type' => 'product_unavailable', 'message' => "Product {$productId} is not available for order."]);
+            }
+
+            $minimumQuantity = $this->resolveMinimumQuantity($productId, $attributeId);
+            if ($quantity < $minimumQuantity) {
+                $errors->push(['type' => 'minimum_quantity', 'message' => "Product {$productId} requires a minimum quantity of {$minimumQuantity}."]);
+            }
+        }
+
+        return $errors;
+    }
+
     // ******************** Helper Methods *******************************
 
     private function loadCartGraph(Cart $cart): Cart
@@ -452,7 +497,8 @@ class CartService
 
     private function deleteLine($line)
     {
-        CartProduct::where('id_cart', $line->id_cart)
+        CartProduct::query()
+            ->where('id_cart', $line->id_cart)
             ->where('id_product', $line->id_product)
             ->where('id_product_attribute', $line->id_product_attribute)
             ->where('id_customization', $line->id_customization)
