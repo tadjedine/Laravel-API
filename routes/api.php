@@ -59,9 +59,13 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
         Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
 
-        // Address endpoints (authenticated)
+        // Address endpoints 
         Route::middleware('auth:sanctum')->group(function () {
-            Route::apiResource('addresses', AddressController::class);
+            Route::get('addresses', [AddressController::class, 'index']);
+            Route::post('addresses', [AddressController::class, 'store']);
+            Route::get('addresses/{address}', [AddressController::class, 'show']);
+            Route::put('addresses/{address}', [AddressController::class, 'update']);
+            Route::delete('addresses/{address}', [AddressController::class, 'destroy']);
         });
 
     });

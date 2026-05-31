@@ -24,13 +24,7 @@ class UpdateAddressRequest extends FormRequest
                 'min:1',
                 Rule::exists('ps_country', 'id_country'),
             ],
-            'id_state' => [
-                'sometimes',
-                'nullable',
-                'integer',
-                'min:1',
-                Rule::exists('ps_state', 'id_state'),
-            ],
+            'id_state' => ['sometimes', 'nullable', 'integer', 'min:1'],
 
             'alias'        => ['sometimes', 'string', 'max:32'],
             'firstname'    => ['sometimes', 'string', 'max:255'],

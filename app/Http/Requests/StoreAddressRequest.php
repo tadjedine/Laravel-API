@@ -24,12 +24,7 @@ class StoreAddressRequest extends FormRequest
                 'min:1',
                 Rule::exists('ps_country', 'id_country'),
             ],
-            'id_state' => [
-                'nullable',
-                'integer',
-                'min:1',
-                Rule::exists('ps_state', 'id_state'),
-            ],
+            'id_state' => ['nullable', 'integer', 'min:1'],
 
             'alias'        => ['required', 'string', 'max:32'],
             'firstname'    => ['required', 'string', 'max:255'],
