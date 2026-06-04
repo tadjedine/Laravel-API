@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, PostController, ProductController, CategoryController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, PostController, ProductController, CategoryController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +66,14 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::get('addresses/{address}', [AddressController::class, 'show']);
             Route::put('addresses/{address}', [AddressController::class, 'update']);
             Route::delete('addresses/{address}', [AddressController::class, 'destroy']);
+        });
+
+        // Checkout endpoints (authenticated)
+        Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
+            Route::put('addresses', [CheckoutController::class, 'setAddresses']);
+            Route::put('carrier', [CheckoutController::class, 'setCarrier']);
+            Route::get('summary', [CheckoutController::class, 'summary']);
+            Route::post('confirm', [CheckoutController::class, 'confirm']);
         });
 
     });
