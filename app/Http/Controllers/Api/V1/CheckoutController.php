@@ -10,6 +10,7 @@ use App\Http\Resources\CheckoutResource;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\Cart;
 
 class CheckoutController extends Controller
 {
@@ -76,7 +77,7 @@ class CheckoutController extends Controller
         $order = $this->checkoutService->confirm(
             $this->resolveCartId($request),
             $request->customerId(),
-            $request->validated('payment_method'),
+            $request->paymentMethod(),
         );
 
         return response()->json([
@@ -103,7 +104,7 @@ class CheckoutController extends Controller
         }
 
         // Find latest open cart for the authenticated customer
-        $cart = \App\Models\Cart::query()
+        $cart = Cart::query()
             ->where('id_customer', $request->user()->id_customer)
             ->whereDoesntHave('order')
             ->orderByDesc('id_cart')

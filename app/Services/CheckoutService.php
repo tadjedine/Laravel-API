@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentMethod;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\CartProduct;
@@ -190,7 +191,7 @@ class CheckoutService
     /**
      * Finalize checkout: convert cart into an order.
      */
-    public function confirm(int $id_cart, int $customerId, string $paymentMethod): Order
+    public function confirm(int $id_cart, int $customerId, PaymentMethod $paymentMethod): Order
     {
         return DB::transaction(function () use ($id_cart, $customerId, $paymentMethod) {
 
@@ -268,10 +269,10 @@ class CheckoutService
                 'id_currency'             => (int) $cart->id_currency,
                 'id_address_delivery'     => (int) $cart->id_address_delivery,
                 'id_address_invoice'      => (int) $cart->id_address_invoice,
-                'current_state'           => 10, // 10 = "Awaiting bank wire" (safe default)
+                'current_state'           => $paymentMethod->initialState(),
                 'secure_key'              => $cart->secure_key,
-                'payment'                 => $paymentMethod,
-                'module'                  => 'ps_wirepayment', // v1 default
+                'payment'                 => $paymentMethod->label(),
+                'module'                  => $paymentMethod->module(),
                 'conversion_rate'         => 1.0,
                 'recyclable'              => (int) $cart->recyclable,
                 'gift'                    => (int) $cart->gift,
