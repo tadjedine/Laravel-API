@@ -12,6 +12,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne as RelationsHasOne;
+use Reliese\Coders\Model\Relations\HasOne;
 
 /**
  * Class PsProductAttribute
@@ -86,5 +88,10 @@ class ProductAttribute extends PrestashopModel
 	public function cartProducts(): HasMany
 	{
     return $this->hasMany(CartProduct::class, 'id_product_attribute', 'id_product_attribute');
+	}
+
+	public function stockAvailable()
+	{
+		return $this->hasOne(StockAvailable::class, 'id_product_attribute' , 'id_product_attribute');
 	}
 }

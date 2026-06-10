@@ -363,6 +363,12 @@ class CheckoutService
                     'total_refunded_tax_excl'       => 0.0,
                     'total_refunded_tax_incl'       => 0.0,
                 ]);
+
+                // Decrement stock from ps_stock_available
+                \App\Models\StockAvailable::query()
+                    ->where('id_product', (int) $line->id_product)
+                    ->where('id_product_attribute', (int) $line->id_product_attribute)
+                    ->decrement('quantity', $qty);
             }
 
             // 10. Copy cart rules to ps_order_cart_rule

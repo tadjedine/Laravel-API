@@ -9,6 +9,7 @@ use App\Models\Cart;
 use App\Models\CartProduct;
 use App\Models\Product;
 use App\Models\ProductAttribute;
+use App\Models\StockAvailable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -101,6 +102,15 @@ class CartService
                 $minimumQuantity = $this->resolveMinimumQuantity($productId, $idProductAttribute);
                 if ($quantity < $minimumQuantity) {
                     throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
+                }
+
+                $stock = StockAvailable::query()
+                    ->where('id_product', $productId)
+                    ->where('id_product_attribute', $idProductAttribute)
+                    ->value('quantity') ?? 0;
+
+                if ($quantity > $stock) {
+                    throw new RuntimeException("Not enough stock available. Only {$stock} remaining.");
                 }
 
                 $line->quantity = $quantity;
@@ -311,6 +321,15 @@ class CartService
             if ($quantity < $minimumQuantity) {
                 $errors->push(['type' => 'minimum_quantity', 'message' => "Product {$productId} requires a minimum quantity of {$minimumQuantity}."]);
             }
+
+            $stock = StockAvailable::query()
+                ->where('id_product', $productId)
+                ->where('id_product_attribute', $attributeId)
+                ->value('quantity') ?? 0;
+
+            if ($quantity > $stock) {
+                $errors->push(['type' => 'out_of_stock', 'message' => "Product {$productId} does not have enough stock ({$stock} remaining)."]);
+            }
         }
 
         return $errors;
@@ -365,6 +384,15 @@ class CartService
                 throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
             }
 
+            $stock = StockAvailable::query()
+                ->where('id_product', $productId)
+                ->where('id_product_attribute', $idProductAttribute)
+                ->value('quantity') ?? 0;
+
+            if ($newQuantity > $stock) {
+                throw new RuntimeException("Not enough stock available. Only {$stock} remaining.");
+            }
+
             $line->quantity = $newQuantity;
             $line->date_add = $now;
             // $line->save();
@@ -378,6 +406,15 @@ class CartService
         } else {
             if ($quantity < $minimumQuantity) {
                 throw new RuntimeException("Quantity must be at least {$minimumQuantity} for this product.");
+            }
+
+            $stock = StockAvailable::query()
+                ->where('id_product', $productId)
+                ->where('id_product_attribute', $idProductAttribute)
+                ->value('quantity') ?? 0;
+
+            if ($quantity > $stock) {
+                throw new RuntimeException("Not enough stock available. Only {$stock} remaining.");
             }
 
             $line = CartProduct::query()->create([

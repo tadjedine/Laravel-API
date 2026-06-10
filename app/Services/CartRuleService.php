@@ -23,7 +23,7 @@ class CartRuleService
         $cart = DB::transaction(function () use ($customerId, $code, $idLang) {
             // 1. Resolve cart rule (active scope includes date + quantity checks)
             $rule = CartRule::active()
-                ->whereRaw('LOWER(code) = ?', [strtolower($code)])
+                ->where('code', $code)
                 ->first();
 
             if (! $rule) {
@@ -40,7 +40,7 @@ class CartRuleService
             $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
 
             // 4. Already applied?
-            $alreadyApplied = CartCartRule::query()
+            $alreadyApplied = DB::table('ps_cart_cart_rule')
                 ->where('id_cart', $lockedCart->id_cart)
                 ->where('id_cart_rule', $rule->id_cart_rule)
                 ->exists();
@@ -51,7 +51,7 @@ class CartRuleService
 
             // 5. Per-user usage limit
             if ((int) $rule->quantity_per_user > 0) {
-                $usedCount = CartCartRule::query()
+                $usedCount = DB::table('ps_cart_cart_rule')
                     ->whereIn('id_cart', function ($sub) use ($customerId) {
                         $sub->select('id_cart')
                             ->from('ps_cart')
@@ -95,11 +95,7 @@ class CartRuleService
                 }
             }
 
-            // 8. Attach the rule
-            CartCartRule::query()->create([
-                'id_cart'          => $lockedCart->id_cart,
-                'id_cart_rule'     => $rule->id_cart_rule,
-            ]);
+            $lockedCart->cartRules()->attach($rule->id_cart_rule);
 
             $lockedCart->date_upd = Carbon::now();
             $lockedCart->save();
@@ -117,7 +113,7 @@ class CartRuleService
     {
         $cart = DB::transaction(function () use ($customerId, $code) {
             $rule = CartRule::query()
-                ->whereRaw('LOWER(code) = ?', [strtolower($code)])
+                ->where('code', $code)
                 ->first();
 
             if (! $rule) {
@@ -127,10 +123,7 @@ class CartRuleService
             $cart = $this->getActiveCartForCustomer($customerId);
             $lockedCart = Cart::query()->whereKey($cart->id_cart)->lockForUpdate()->firstOrFail();
 
-            $deleted = CartCartRule::query()
-                ->where('id_cart', $lockedCart->id_cart)
-                ->where('id_cart_rule', $rule->id_cart_rule)
-                ->delete();
+            $deleted = $lockedCart->cartRules()->detach($rule->id_cart_rule);
 
             if (! $deleted) {
                 throw new RuntimeException('This voucher is not applied to your cart.');

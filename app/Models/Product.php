@@ -235,6 +235,11 @@ class Product extends PrestashopModel
 					->where('cover', 1);
 	}
 
+	public function stockAvailable(): HasMany
+	{
+		return $this->hasMany(StockAvailable::class, 'id_product', 'id_product');
+	}
+
 	public function getNameAttribute(): ?string
 	{
 		return $this->lang?->name;

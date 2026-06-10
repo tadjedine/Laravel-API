@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockAvailable;
 use App\Repositories\ProductRepository;
 // use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -44,10 +45,18 @@ class ProductService
         $this->productRepository->delete($id);
     }
 
-    public function isInStock(int $productId, int $quantity = 1): bool
+    public function isInStock(int $productId, int $idProductAttribute = 0 ,int $quantity = 1): bool
     {
-        $product = $this->productRepository->getById($productId);
-        return ($product->quantity ?? 0) >= $quantity;
+        // $product = $this->productRepository->getById($productId);
+        // return ($product->quantity ?? 0) >= $quantity;
+        $product = $this->getProductById($productId);
+
+        $stock = StockAvailable::query()
+                    ->where('id_product', $product->id_product)
+                    ->where('id_product_attribute', $idProductAttribute)
+                    ->value('quantity');
+
+        return ($stock >= $quantity);
     }
 
     public function getProductsByCategory(int $categoryId, array $filters = [])

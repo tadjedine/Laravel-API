@@ -22,7 +22,7 @@ class ProductResource extends JsonResource
             'slug'              => $this->link_rewrite ?? 'product-' . $this->id_product,
             'price'             => (float) $this->price,
             'reference'         => $this->reference,
-            'quantity'          => $this->quantity,
+            'quantity'          => $this->whenLoaded('stockAvailable', fn() => $this->stockAvailable->sum('quantity'), $this->quantity),
             'active'            => (bool) $this->active,
             'on_sale'           => (bool) $this->on_sale,
             'condition'         => $this->condition,
