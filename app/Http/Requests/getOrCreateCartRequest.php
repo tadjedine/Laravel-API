@@ -22,7 +22,7 @@ class getOrCreateCartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_customer' => ['required', 'integer', 'min:1'],
+            // 'id_customer' => ['required', 'integer', 'min:1'],
             'id_shop_group' => ['nullable', 'integer', 'min:1'],
             'id_shop' => ['nullable', 'integer', 'min:1'],
             'id_lang' => ['nullable', 'integer', 'min:1'],
@@ -36,7 +36,7 @@ class getOrCreateCartRequest extends FormRequest
 
     public function customerId(): int
     {
-        return (int) $this->validated('id_customer');
+        return (int) $this->user()->id_customer;
     }
 
     public function context(): array

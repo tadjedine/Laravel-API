@@ -23,7 +23,7 @@ class AddCartItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_customer' => ['required', 'integer', 'min:1'],
+            // 'id_customer' => ['required', 'integer', 'min:1'],
             'id_product' => [
                 'required',
                 'integer',
@@ -53,7 +53,7 @@ class AddCartItemRequest extends FormRequest
 
     public function customerId(): int
     {
-        return (int) $this->validated('id_customer');
+        return (int) $this->user()->id_customer;
     }
 
     public function productId(): int

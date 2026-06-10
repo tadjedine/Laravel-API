@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -46,26 +46,36 @@ Route::middleware('auth:sanctum')->group(function(){
 
         Route::apiResource('categories', CategoryController::class);
 
-        // Cart endpoints
-        Route::post('cart', [CartController::class, 'index']);
-        Route::get('cart/{cartId}', [CartController::class, 'show']);
-        Route::post('cart/items', [CartController::class, 'store']);// add item
-        Route::put('cart/items/{productId}', [CartController::class, 'update']);
-        Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
-        Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+        // Carriers & Countries (public)
+        Route::get('carriers', [CarrierController::class, 'index']);
+        Route::get('countries', [CountryController::class, 'index']);
 
-        // Cart Rule (voucher) endpoints
-        Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
-        Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
-        Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
-
-        // Address endpoints (authenticated)
+        // Authenticated endpoints
         Route::middleware('auth:sanctum')->group(function () {
+            // Cart endpoints
+            Route::post('cart', [CartController::class, 'index']);
+            Route::get('cart/{cartId}', [CartController::class, 'show']);
+            Route::post('cart/items', [CartController::class, 'store']);// add item
+            Route::put('cart/items/{productId}', [CartController::class, 'update']);
+            Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
+            Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+
+            // Cart Rule (voucher) endpoints
+            Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
+            Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
+            Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
+
+            // Address endpoints
             Route::get('addresses', [AddressController::class, 'index']);
             Route::post('addresses', [AddressController::class, 'store']);
             Route::get('addresses/{address}', [AddressController::class, 'show']);
             Route::put('addresses/{address}', [AddressController::class, 'update']);
             Route::delete('addresses/{address}', [AddressController::class, 'destroy']);
+            
+            // Order endpoints
+            Route::get('orders', [OrderController::class, 'index']);
+            Route::get('orders/{orderId}', [OrderController::class, 'show']);
+            Route::put('orders/{orderId}/state', [OrderController::class, 'updateState']);
         });
 
         // Checkout endpoints (authenticated)
@@ -74,13 +84,6 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::put('carrier', [CheckoutController::class, 'setCarrier']);
             Route::get('summary', [CheckoutController::class, 'summary']);
             Route::post('confirm', [CheckoutController::class, 'confirm']);
-        });
-
-        // Order endpoints (authenticated)
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::get('orders', [OrderController::class, 'index']);
-            Route::get('orders/{orderId}', [OrderController::class, 'show']);
-            Route::put('orders/{orderId}/state', [OrderController::class, 'updateState']);
         });
 
     });

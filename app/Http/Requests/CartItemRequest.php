@@ -34,7 +34,7 @@ class CartItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_customer' => ['required', 'integer', 'min:1'],
+            // 'id_customer' => ['required', 'integer', 'min:1'],
             'quantity' => ['required', 'integer', 'min:0'],
 
             // product id comes from route parameter {id}
@@ -56,7 +56,7 @@ class CartItemRequest extends FormRequest
 
     public function customerId()
     {
-        return $this->validated('id_customer');
+        return (int) $this->user()->id_customer;
     }
 
     public function quantity()
