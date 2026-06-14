@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController, FilterController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::prefix('v1')->group(function () {
 
         Route::apiResource('products', ProductController::class);
+
+        // Filters endpoint
+        Route::get('filters', [FilterController::class, 'index']);
 
         // Custom endpoints for products
         Route::get('products/{id}/images', [ProductController::class, 'getImages']);
