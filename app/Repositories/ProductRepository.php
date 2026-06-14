@@ -53,11 +53,11 @@ class ProductRepository{
         return $product;
     }
 
-    public function delete(int $id): bool
+    public function deleteProduct(int $id): bool
     {
         $product = $this->getById($id);
         
-        return $product->delete();
+        return $product->delete($product->id_product);
     }
 
     public function getByCategory(int $categoryId, array $filters = []): LengthAwarePaginator
