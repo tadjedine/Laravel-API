@@ -11,6 +11,7 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne as RelationsHasOne;
 use Reliese\Coders\Model\Relations\HasOne;
@@ -93,5 +94,21 @@ class ProductAttribute extends PrestashopModel
 	public function stockAvailable()
 	{
 		return $this->hasOne(StockAvailable::class, 'id_product_attribute' , 'id_product_attribute');
+	}
+
+	public function attributes(): BelongsToMany
+	{
+		return $this->belongsToMany(Attribute::class,'ps_product_attribute_combination', 'id_product_attribute', 'id_attribute' );
+	}
+
+	// Images specific to this combination
+	public function images(): BelongsToMany
+	{
+		return $this->belongsToMany(
+			ProductImage::class,
+			'ps_product_attribute_image',
+			'id_product_attribute',
+			'id_image'
+		);
 	}
 }

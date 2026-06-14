@@ -21,12 +21,15 @@ class ProductService
     public function getProductById(int $id): Product
     {
         $product = $this->productRepository->getById($id);
-        // if (! $product) {
-        //     throw new ModelNotFoundException();
-        // }
-        // No need to check the product's existence here, we check in the repo
-        //$product->load(['images', 'attributes', 'reviews']);
-        $product->load(['images']);
+
+        $product->load([
+            'images',
+            'productAttribute.attributes.group.lang',
+            'productAttribute.attributes.lang',
+            'productAttribute.stockAvailable',
+            'productAttribute.images',
+        ]);
+
         return $product;
     }
 

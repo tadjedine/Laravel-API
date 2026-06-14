@@ -197,7 +197,7 @@ class Product extends PrestashopModel
 
 	public function productAttribute() : HasMany
 	{
-		return $this->hasMany(ProductAttribute::class);
+		return $this->hasMany(ProductAttribute::class, 'id_product', 'id_product');
 	}
 
 	//Cart line items that reference this product.
@@ -258,5 +258,15 @@ class Product extends PrestashopModel
 	public function getLinkRewriteAttribute(): ?string
 	{
 		return $this->lang?->link_rewrite;
+	}
+
+	public function features(): BelongsToMany
+	{
+		return $this->belongsToMany(
+			FeatureValue::class,
+			'ps_feature_product',
+			'id_product',
+			'id_feature_value'
+		)->withPivot('id_feature');
 	}
 }
