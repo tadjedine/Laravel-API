@@ -133,6 +133,7 @@ class CheckoutService
                 'name'                 => $line->product?->name,
                 'reference'            => $line->product?->reference,
                 'image'                => $line->product?->images?->first()?->id_image,
+                'image_url'            => $line->product?->images?->first()?->getUrl('cart_default'),
             ];
 
             $subtotal += $lineTotal;

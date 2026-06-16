@@ -14,7 +14,7 @@ class ProductRepository{
         //     'products_' . md5(json_encode($filters)),
         //     now()->addHours(2),
         //     fn() => $this->prestaShopService->getProducts($filters)
-        $query = Product::with(['lang', 'coverImage', 'stockAvailable']);
+        $query = Product::with(['lang', 'coverImage', 'stockAvailable', 'images']);
 
         if (isset($filters['category'])) {
             $query->where('id_category_default', $filters['category']);
@@ -95,7 +95,7 @@ class ProductRepository{
     
     public function getById(int $id)
     {
-        return Product::with(['lang', 'coverImage', 'stockAvailable'])->findOrFail($id);
+        return Product::with(['lang', 'coverImage', 'stockAvailable', 'images'])->findOrFail($id);
     }
 
      public function create(array $data): Product
@@ -120,7 +120,7 @@ class ProductRepository{
 
     public function getByCategory(int $categoryId, array $filters = []): LengthAwarePaginator
     {
-        return Product::with(['lang', 'coverImage', 'stockAvailable'])
+        return Product::with(['lang', 'coverImage', 'stockAvailable', 'images'])
             ->where('id_category_default', $categoryId)
             ->where('active', 1)
             ->paginate($filters['per_page'] ?? 15);
@@ -132,7 +132,7 @@ class ProductRepository{
         //     ->orWhere('description', 'like', '%' . $query . '%')
         //     ->paginate($filters['per_page'] ?? 15);
         
-        return Product::with(['lang', 'coverImage', 'stockAvailable'])
+        return Product::with(['lang', 'coverImage', 'stockAvailable', 'images'])
             ->where(function($q) use ($query) {
                 $q->where('name', 'like', '%'.$query.'%')
                   ->orWhere('description', 'like', '%'.$query.'%');

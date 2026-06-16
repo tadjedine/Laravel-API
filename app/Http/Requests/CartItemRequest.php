@@ -19,11 +19,24 @@ class CartItemRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'id_product_attribute' => (int) ($this->input('id_product_attribute') ?? 0),
-            'id_customization' => (int) ($this->input('id_customization')),
-            'id_address_delivery' => (int) ($this->input('id_address_delivery')),
-        ]);
+        if ($this->isMethod('delete')) {
+            $this->merge(['quantity' => 0]);
+        }
+        
+        $merge = [];
+        if ($this->has('id_product_attribute')) {
+            $merge['id_product_attribute'] = (int) $this->input('id_product_attribute');
+        }
+        if ($this->has('id_customization')) {
+            $merge['id_customization'] = (int) $this->input('id_customization');
+        }
+        if ($this->has('id_address_delivery')) {
+            $merge['id_address_delivery'] = (int) $this->input('id_address_delivery');
+        }
+        
+        if (!empty($merge)) {
+            $this->merge($merge);
+        }
     }
 
     /**
@@ -66,10 +79,10 @@ class CartItemRequest extends FormRequest
     
     public function context(): array
     {
-        return [
-            'id_product_attribute' => (int) $this->validated('id_product_attribute', 0),
-            'id_customization' => (int) $this->validated('id_customization', 0),
-            'id_address_delivery' => (int) $this->validated('id_address_delivery'),
-        ];
+        return array_filter([
+            'id_product_attribute' => $this->validated('id_product_attribute'),
+            'id_customization' => $this->validated('id_customization'),
+            'id_address_delivery' => $this->validated('id_address_delivery'),
+        ], static fn ($value) => $value !== null);
     }
 }
