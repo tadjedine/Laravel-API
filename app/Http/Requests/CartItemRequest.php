@@ -67,9 +67,18 @@ class CartItemRequest extends FormRequest
         ];
     }
 
-    public function customerId()
+    public function customerId(): int
     {
-        return (int) $this->user()->id_customer;
+        if ($this->user()) {
+            return (int) $this->user()->id_customer;
+        }
+
+        $guestCustomerId = $this->attributes->get('guest_customer_id');
+        if ($guestCustomerId) {
+            return (int) $guestCustomerId;
+        }
+
+        throw new \RuntimeException('No authenticated user or guest session found.');
     }
 
     public function quantity()
@@ -83,6 +92,8 @@ class CartItemRequest extends FormRequest
             'id_product_attribute' => $this->validated('id_product_attribute'),
             'id_customization' => $this->validated('id_customization'),
             'id_address_delivery' => $this->validated('id_address_delivery'),
+            'id_guest'=> $this->attributes->get('guest_id')
+            
         ], static fn ($value) => $value !== null);
     }
 }
