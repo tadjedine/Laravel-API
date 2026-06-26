@@ -85,11 +85,13 @@ Route::middleware('auth:sanctum')->group(function(){
         // Guest checkout (no auth required — uses guest cookie session)
         Route::post('checkout/guest-confirm', [CheckoutController::class, 'guestConfirm']);
 
+        // Checkout endpoints (public / guest supported)
+        Route::get('checkout/summary', [CheckoutController::class, 'summary']);
+        
         // Checkout endpoints (authenticated)
         Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
             Route::put('addresses', [CheckoutController::class, 'setAddresses']);
             Route::put('carrier', [CheckoutController::class, 'setCarrier']);
-            Route::get('summary', [CheckoutController::class, 'summary']);
             Route::post('confirm', [CheckoutController::class, 'confirm']);
         });
 

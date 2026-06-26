@@ -66,7 +66,7 @@ class CheckoutController extends Controller
     {
         $summaryData = $this->checkoutService->getSummary(
             $this->resolveCartId($request),
-            (int) $request->user()->id_customer,
+            $this->resolveCustomerId($request),
         );
 
         return new CheckoutResource($summaryData);
@@ -191,6 +191,19 @@ class CheckoutController extends Controller
 
     // ── Helper ──────────────────────────────────────────────────────
 
+    private function resolveCustomerId(Request $request): int
+    {
+        if ($user = $request->user()) {
+            return (int) $user->id_customer;
+        }
+
+        if ($guestCustomerId = $request->attributes->get('guest_customer_id')) {
+            return (int) $guestCustomerId;
+        }
+
+        throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException('No active customer session found.');
+    }
+
     /**
      * Resolve the cart ID for checkout.
      *
@@ -203,9 +216,9 @@ class CheckoutController extends Controller
             return (int) $request->input('cart_id');
         }
 
-        // Find latest open cart for the authenticated customer
+        // Find latest open cart for the customer/guest
         $cart = Cart::query()
-            ->where('id_customer', $request->user()->id_customer)
+            ->where('id_customer', $this->resolveCustomerId($request))
             ->whereDoesntHave('order')
             ->orderByDesc('id_cart')
             ->first();
