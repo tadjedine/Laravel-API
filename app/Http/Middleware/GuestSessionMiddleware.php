@@ -92,7 +92,7 @@ class GuestSessionMiddleware
             'id_customer' => $customer->id_customer,
         ]);
 
-        // 3. Queue the cookie (SameSite=none for cross-origin, httpOnly for security)
+        // 3. Queue the cookie (SameSite=lax for same-site localhost, httpOnly for security)
         Cookie::queue(
             self::COOKIE_NAME,
             $guest->id_guest,
@@ -102,7 +102,7 @@ class GuestSessionMiddleware
             false,          // secure (false for HTTP localhost)
             true,           // httpOnly
             false,          // raw
-            'none'          // sameSite (required for cross-origin)
+            'lax'           // sameSite (lax works for same-site localhost:3000 → localhost:8000)
         );
 
         return $guest;

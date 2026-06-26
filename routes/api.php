@@ -53,17 +53,18 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('carriers', [CarrierController::class, 'index']);
         Route::get('countries', [CountryController::class, 'index']);
 
+        // Cart endpoints
+        Route::post('cart', [CartController::class, 'index']);
+        Route::get('cart/{cartId}', [CartController::class, 'show']);
+        Route::post('cart/items', [CartController::class, 'store']);// add item
+        Route::put('cart/items/{productId}', [CartController::class, 'update']);
+        Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
+        Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+        
         // Authenticated endpoints
         Route::middleware('auth:sanctum')->group(function () {
-            // Cart endpoints
-            Route::post('cart', [CartController::class, 'index']);
-            Route::get('cart/{cartId}', [CartController::class, 'show']);
-            Route::post('cart/items', [CartController::class, 'store']);// add item
-            Route::put('cart/items/{productId}', [CartController::class, 'update']);
-            Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
-            Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
 
-            // Cart Rule (voucher) endpoints
+            // Cart Rule (voucher) endpoints ( need to verify their functioning for Guest users)
             Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
             Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
             Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
@@ -80,6 +81,9 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::get('orders/{orderId}', [OrderController::class, 'show']);
             Route::put('orders/{orderId}/state', [OrderController::class, 'updateState']);
         });
+
+        // Guest checkout (no auth required — uses guest cookie session)
+        Route::post('checkout/guest-confirm', [CheckoutController::class, 'guestConfirm']);
 
         // Checkout endpoints (authenticated)
         Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
