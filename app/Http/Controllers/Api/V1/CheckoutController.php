@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Checkout\ConfirmCheckoutRequest;
+use App\Http\Requests\Checkout\GuestCheckoutRequest;
 use App\Http\Requests\Checkout\SetAddressesRequest;
 use App\Http\Requests\Checkout\SetCarrierRequest;
 use App\Http\Resources\CheckoutResource;
+use App\Models\Address;
+use App\Models\Cart;
+use App\Models\Customer;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Cart;
 
 class CheckoutController extends Controller
 {
@@ -89,6 +93,102 @@ class CheckoutController extends Controller
         ], 201);
     }
 
+    /**
+     * Guest checkout — collect contact info, address, and confirm in one step.
+     * POST /v1/checkout/guest-confirm
+     *
+     * This endpoint handles the entire guest checkout flow:
+     * 1. Checks if the provided email belongs to a real account (rejects if so).
+     * 2. Updates the guest-customer row with real contact info.
+     * 3. Creates a shipping address for the guest-customer.
+     * 4. Sets address and carrier on the cart.
+     * 5. Confirms the order using the existing CheckoutService.
+     */
+    public function guestConfirm(GuestCheckoutRequest $request): JsonResponse
+    {
+        $guestCustomerId = (int) $request->attributes->get('guest_customer_id');
+        $data = $request->validated();
+
+        // 1. Check if the email belongs to a real (non-guest) account
+        $existingReal = Customer::query()
+            ->where('email', $data['email'])
+            ->where('is_guest', 0)
+            ->where('deleted', 0)
+            ->first();
+
+        if ($existingReal) {
+            return response()->json([
+                'message' => 'An account with this email already exists. Please sign in instead.',
+            ], 409);
+        }
+
+        // 2. Update the guest-customer with real contact info
+        $guestCustomer = Customer::query()->findOrFail($guestCustomerId);
+        $guestCustomer->update([
+            'email'     => $data['email'],
+            'firstname' => $data['firstname'],
+            'lastname'  => $data['lastname'],
+            'date_upd'  => now(),
+        ]);
+
+        // 3. Create a shipping address for this guest-customer
+        $address = Address::query()->create([
+            'id_customer'    => $guestCustomerId,
+            'id_country'     => (int) $data['id_country'],
+            'id_state'       => 0,
+            'id_manufacturer'=> 0,
+            'id_supplier'    => 0,
+            'id_warehouse'   => 0,
+            'alias'          => 'Guest Checkout',
+            'firstname'      => $data['firstname'],
+            'lastname'       => $data['lastname'],
+            'address1'       => $data['address1'],
+            'address2'       => $data['address2'] ?? '',
+            'postcode'       => $data['postcode'] ?? '',
+            'city'           => $data['city'],
+            'phone'          => $data['phone'] ?? '',
+            'phone_mobile'   => '',
+            'active'         => 1,
+            'deleted'        => 0,
+            'date_add'       => now(),
+            'date_upd'       => now(),
+        ]);
+
+        // 4. Find the guest's active cart
+        $cart = Cart::query()
+            ->where('id_customer', $guestCustomerId)
+            ->whereDoesntHave('order')
+            ->orderByDesc('id_cart')
+            ->firstOrFail();
+
+        // 5. Set address and carrier on the cart
+        $this->checkoutService->setAddresses(
+            (int) $cart->id_cart,
+            (int) $address->id_address,
+            null
+        );
+        $this->checkoutService->setCarrier(
+            (int) $cart->id_cart,
+            (int) $data['id_carrier']
+        );
+
+        // 6. Confirm the order (reuses existing logic!)
+        $paymentMethod = PaymentMethod::from($data['payment_method']);
+        $order = $this->checkoutService->confirm(
+            (int) $cart->id_cart,
+            $guestCustomerId,
+            $paymentMethod,
+        );
+
+        return response()->json([
+            'message'   => 'Order created successfully.',
+            'order_id'  => (int) $order->id_order,
+            'reference' => $order->reference,
+            'total'     => (float) $order->total_paid,
+            'state'     => (int) $order->current_state,
+        ], 201);
+    }
+
     // ── Helper ──────────────────────────────────────────────────────
 
     /**
@@ -117,3 +217,4 @@ class CheckoutController extends Controller
         return (int) $cart->id_cart;
     }
 }
+

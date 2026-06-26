@@ -6,15 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
-use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
@@ -22,12 +16,49 @@ class RegisteredUserController extends Controller
     /**
      * Handle an incoming registration request.
      *
+     * If the request comes from a guest session, we convert the existing
+     * guest-customer row in-place (update it with real credentials and
+     * set is_guest = 0). The id_customer stays the same, so the cart
+     * and guest rows need no changes.
+     *
      * @throws ValidationException
      */
     public function store(RegisterUserRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $guestCustomerId = $request->attributes->get('guest_customer_id');
 
+        // ── Try in-place conversion of existing guest-customer ─────
+        if ($guestCustomerId) {
+            $guestCustomer = Customer::query()
+                ->where('id_customer', $guestCustomerId)
+                ->where('is_guest', true)
+                ->where('deleted', false)
+                ->first();
+
+            if ($guestCustomer) {
+                $guestCustomer->update([
+                    'firstname'  => $data['firstname'],
+                    'lastname'   => $data['lastname'],
+                    'email'      => $data['email'],
+                    'passwd'     => Hash::make($data['password']),
+                    'id_gender'  => $data['id_gender'] ?? 0,
+                    'birthday'   => $data['birthday'] ?? null,
+                    'newsletter' => !empty($data['newsletter']) ? 1 : 0,
+                    'is_guest'   => false,
+                    'date_upd'   => now(),
+                ]);
+
+                $token = $guestCustomer->createToken('api')->plainTextToken;
+
+                return response()->json([
+                    'customer' => new CustomerResource($guestCustomer->refresh()),
+                    'token'    => $token,
+                ], 201);
+            }
+        }
+
+        // ── Fallback: normal registration (no guest session) ───────
         $customer = Customer::create([
             'id_shop_group'    => 1,
             'id_shop'          => 1,
@@ -62,3 +93,4 @@ class RegisteredUserController extends Controller
         ], 201);
     }
 }
+

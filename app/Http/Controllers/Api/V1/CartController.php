@@ -8,6 +8,7 @@ use App\Http\Requests\CartItemRequest;
 use App\Http\Requests\GetOrCreateCartRequest;
 use App\Http\Resources\CartResource;
 use App\Services\CartService;
+use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
