@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
         // Checkout endpoints (public / guest supported)
         Route::get('checkout/summary', [CheckoutController::class, 'summary']);
+        Route::get('checkout/order-details', [CheckoutController::class, 'guestOrderDetails']);
         
         // Checkout endpoints (authenticated)
         Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {

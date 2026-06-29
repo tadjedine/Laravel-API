@@ -12,6 +12,7 @@ use App\Http\Resources\CheckoutResource;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -187,6 +188,72 @@ class CheckoutController extends Controller
             'total'     => (float) $order->total_paid,
             'state'     => (int) $order->current_state,
         ], 201);
+    }
+
+    /**
+     * Fetch order details by ID + reference (no auth required).
+     * GET /v1/checkout/order-details?id={id}&ref={reference}
+     *
+     * This enables guests to view their order summary on the confirmation page.
+     */
+    public function guestOrderDetails(Request $request): JsonResponse
+    {
+        $orderId   = (int) $request->query('id');
+        $reference = (string) $request->query('ref');
+
+        if (!$orderId || !$reference) {
+            return response()->json(['message' => 'Missing order id or reference.'], 400);
+        }
+
+        $order = Order::query()
+            ->where('id_order', $orderId)
+            ->where('reference', $reference)
+            ->with('details')
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found.'], 404);
+        }
+
+        // Also fetch the delivery address and customer info
+        $address = Address::query()->find($order->id_address_delivery);
+        $customer = Customer::query()->find($order->id_customer);
+
+        return response()->json([
+            'data' => [
+                'id'                => (int) $order->id_order,
+                'reference'         => $order->reference,
+                'current_state'     => (int) $order->current_state,
+                'payment'           => $order->payment,
+                'total_products'    => (float) $order->total_products,
+                'total_discounts'   => (float) $order->total_discounts,
+                'total_shipping'    => (float) $order->total_shipping,
+                'total_paid'        => (float) $order->total_paid,
+                'date_add'          => $order->date_add,
+                'customer' => $customer ? [
+                    'firstname' => $customer->firstname,
+                    'lastname'  => $customer->lastname,
+                    'email'     => $customer->email,
+                ] : null,
+                'delivery_address' => $address ? [
+                    'firstname'    => $address->firstname,
+                    'lastname'     => $address->lastname,
+                    'address1'     => $address->address1,
+                    'address2'     => $address->address2,
+                    'postcode'     => $address->postcode,
+                    'city'         => $address->city,
+                    'phone'        => $address->phone,
+                    'id_country'   => (int) $address->id_country,
+                ] : null,
+                'details' => $order->details->map(fn ($d) => [
+                    'product_id'   => (int) $d->product_id,
+                    'product_name' => $d->product_name,
+                    'quantity'     => (int) $d->product_quantity,
+                    'unit_price'   => (float) $d->unit_price_tax_incl,
+                    'total_price'  => (float) $d->total_price_tax_incl,
+                ]),
+            ],
+        ]);
     }
 
     // ── Helper ──────────────────────────────────────────────────────
