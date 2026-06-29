@@ -15,7 +15,7 @@ class RegisterUserRequest extends FormRequest
             'lastname'  => ['required', 'string', 'max:255'],
             'email'     => [
                 'required', 'string', 'email', 'max:255',
-                Rule::unique(Customer::class, 'email')->where(fn ($q) => $q->where('deleted', 0)),
+                Rule::unique(Customer::class, 'email')->where(fn ($q) => $q->where('deleted', 0)->where('is_guest', 0)),
             ],
             'password'  => ['required', 'string', 'min:8', 'confirmed'],
             'birthday'  => ['nullable', 'date'],

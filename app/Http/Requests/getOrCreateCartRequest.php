@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class getOrCreateCartRequest extends FormRequest
+class GetOrCreateCartRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -36,7 +36,22 @@ class getOrCreateCartRequest extends FormRequest
 
     public function customerId(): int
     {
-        return (int) $this->user()->id_customer;
+        if ($this->user()) {
+            return (int) $this->user()->id_customer;
+        }
+
+        $guestCustomerId = $this->attributes->get('guest_customer_id');
+        if ($guestCustomerId) {
+            return (int) $guestCustomerId;
+        }
+
+        // No session yet — create one on demand
+        $guest = \App\Http\Middleware\GuestSessionMiddleware::createGuestSession();
+        $this->attributes->set('guest', $guest);
+        $this->attributes->set('guest_id', (int) $guest->id_guest);
+        $this->attributes->set('guest_customer_id', (int) $guest->id_customer);
+
+        return (int) $guest->id_customer;
     }
 
     public function context(): array
@@ -48,7 +63,7 @@ class getOrCreateCartRequest extends FormRequest
             'id_currency' => $this->validated('id_currency'),
             'id_address_delivery' => $this->validated('id_address_delivery'),
             'id_address_invoice' => $this->validated('id_address_invoice'),
-            'id_guest' => $this->validated('id_guest'),
+            'id_guest' => $this->attributes->get('guest_id'),
             'delivery_option' => $this->validated('delivery_option'),
         ], static fn ($value) => $value !== null);
     }

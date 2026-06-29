@@ -49,7 +49,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class PsProductShop extends Model
+class ProductShop extends Model
 {
 	protected $table = 'ps_product_shop';
 	public $incrementing = false;

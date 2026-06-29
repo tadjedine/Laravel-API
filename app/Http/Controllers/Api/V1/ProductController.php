@@ -16,7 +16,10 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['category', 'category_slug', 'search', 'per_page']);
+        $filters = $request->only([
+            'category', 'category_slug', 'search', 'per_page',
+            'attributes', 'features', 'price_min', 'price_max', 'sort'
+        ]);
         $products = $this->productService->getProducts($filters);
         
         return ProductResource::collection($products);

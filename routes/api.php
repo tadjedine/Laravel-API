@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController, FilterController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function(){
 
         Route::apiResource('products', ProductController::class);
 
+        // Filters endpoint
+        Route::get('filters', [FilterController::class, 'index']);
+
         // Custom endpoints for products
         Route::get('products/{id}/images', [ProductController::class, 'getImages']);
         Route::get('products/{productId}/images/{imageId}', [ProductController::class, 'getImage']);
@@ -50,17 +53,18 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('carriers', [CarrierController::class, 'index']);
         Route::get('countries', [CountryController::class, 'index']);
 
+        // Cart endpoints
+        Route::post('cart', [CartController::class, 'index']);
+        Route::get('cart/{cartId}', [CartController::class, 'show']);
+        Route::post('cart/items', [CartController::class, 'store']);// add item
+        Route::put('cart/items/{productId}', [CartController::class, 'update']);
+        Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
+        Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
+        
         // Authenticated endpoints
         Route::middleware('auth:sanctum')->group(function () {
-            // Cart endpoints
-            Route::post('cart', [CartController::class, 'index']);
-            Route::get('cart/{cartId}', [CartController::class, 'show']);
-            Route::post('cart/items', [CartController::class, 'store']);// add item
-            Route::put('cart/items/{productId}', [CartController::class, 'update']);
-            Route::delete('cart/items/{productId}', [CartController::class, 'clearItem']); // delete one line
-            Route::delete('cart/{cartId}', [CartController::class, 'destroy']); // clear all items (currently using customerId as {id})
 
-            // Cart Rule (voucher) endpoints
+            // Cart Rule (voucher) endpoints ( need to verify their functioning for Guest users)
             Route::post('cart/rules', [CartRuleController::class, 'applyCode']);
             Route::delete('cart/rules/{code}', [CartRuleController::class, 'removeCode']);
             Route::get('cart/rules', [CartRuleController::class, 'listApplied']);
@@ -78,11 +82,17 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::put('orders/{orderId}/state', [OrderController::class, 'updateState']);
         });
 
+        // Guest checkout (no auth required — uses guest cookie session)
+        Route::post('checkout/guest-confirm', [CheckoutController::class, 'guestConfirm']);
+
+        // Checkout endpoints (public / guest supported)
+        Route::get('checkout/summary', [CheckoutController::class, 'summary']);
+        Route::get('checkout/order-details', [CheckoutController::class, 'guestOrderDetails']);
+        
         // Checkout endpoints (authenticated)
         Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
             Route::put('addresses', [CheckoutController::class, 'setAddresses']);
             Route::put('carrier', [CheckoutController::class, 'setCarrier']);
-            Route::get('summary', [CheckoutController::class, 'summary']);
             Route::post('confirm', [CheckoutController::class, 'confirm']);
         });
 

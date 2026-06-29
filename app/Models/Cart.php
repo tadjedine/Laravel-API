@@ -122,4 +122,9 @@ class Cart extends PrestashopModel
     //     return $this->hasMany(CartCartRule::class, 'id_cart', 'id_cart'); // if you need promo codes
     // }
 
+    public function guest(): BelongsTo
+    {
+    return $this->belongsTo(Guest::class, 'id_guest', 'id_guest');
+    }
+
 }

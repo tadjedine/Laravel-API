@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->api(prepend: [
         //     \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         // ]);
+        $middleware->api(append: [
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\GuestSessionMiddleware::class,
+        ]);
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,

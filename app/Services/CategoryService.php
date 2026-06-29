@@ -37,7 +37,7 @@ class CategoryService
     {
         $query = Category::with('lang')
                 ->where('active',1)
-                ->where('id_parent', 2);
+                ->where('id_parent','>=', 2);
 
         return $query->get();
     
