@@ -69,7 +69,7 @@ class GuestSessionMiddleware
             'id_shop'          => (int) config('prestashop.default_shop_id', 1),
             'id_gender'        => 0,
             'id_default_group' => (int) config('prestashop.default_customer_group_id', 3),
-            'id_lang'          => (int) config('prestashop.default_lang_id', 1),
+            'id_lang'          => (int) config('app.prestashop_lang', 1),
             'id_risk'          => 0,
             'firstname'        => 'Guest',
             'lastname'         => 'Visitor',
