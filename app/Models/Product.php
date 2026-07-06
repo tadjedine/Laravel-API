@@ -225,7 +225,7 @@ class Product extends PrestashopModel
 	public function lang(): HasOne
 	{
 		return $this->hasOne(ProductLang::class, 'id_product', 'id_product')
-					->where('id_lang', 1)
+					->where('id_lang', config('app.prestashop_lang', 1))
 					->where('id_shop', 1);
 	}
 

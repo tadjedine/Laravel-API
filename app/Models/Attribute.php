@@ -45,7 +45,7 @@ class Attribute extends PrestashopModel
 	public function lang(): HasOne
 	{
 		return $this->hasOne(AttributeLang::class, 'id_attribute', 'id_attribute')
-					->where('id_lang', 1);
+					->where('id_lang', config('app.prestashop_lang', 1));
 	}
 
 	public function getNameAttribute(): ?string

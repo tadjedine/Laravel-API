@@ -79,7 +79,7 @@ class ProductRepository{
             case 'name_asc':
                 $query->join('ps_product_lang', function($join) {
                     $join->on('ps_product.id_product', '=', 'ps_product_lang.id_product')
-                         ->where('ps_product_lang.id_lang', 1);
+                         ->where('ps_product_lang.id_lang', config('app.prestashop_lang', 1));
                 })
                 ->orderBy('ps_product_lang.name', 'asc')
                 ->select('ps_product.*');

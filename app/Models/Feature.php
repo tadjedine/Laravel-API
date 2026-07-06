@@ -30,7 +30,7 @@ class Feature extends PrestashopModel
 	public function lang(): HasOne
 	{
 		return $this->hasOne(FeatureLang::class, 'id_feature', 'id_feature')
-					->where('id_lang', 1);
+					->where('id_lang', config('app.prestashop_lang', 1));
 	}
 
 	public function values(): HasMany
