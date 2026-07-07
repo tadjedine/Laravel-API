@@ -64,7 +64,7 @@ class RegisteredUserController extends Controller
             'id_shop'          => 1,
             'id_gender'        => $data['id_gender'] ?? 0,
             'id_default_group' => 3, // PS default "Customer" group
-            'id_lang'          => (int) config('prestashop.default_lang', 1),
+            'id_lang'          => (int) config('app.prestashop_lang', 1),
             'id_risk'          => 0,
             'firstname'        => $data['firstname'],
             'lastname'         => $data['lastname'],

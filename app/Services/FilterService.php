@@ -27,7 +27,7 @@ class FilterService
             $productQuery->join('ps_category AS cat', 'ps_product.id_category_default', '=', 'cat.id_category')
                 ->join('ps_category_lang AS catl', function ($join) {
                     $join->on('cat.id_category', '=', 'catl.id_category')
-                         ->where('catl.id_lang', 1);
+                         ->where('catl.id_lang', config('app.prestashop_lang', 1));
                 })
                 ->where('catl.link_rewrite', $filters['category_slug']);
         }
@@ -59,12 +59,12 @@ class FilterService
             ->join('ps_attribute AS a', 'pac.id_attribute', '=', 'a.id_attribute')
             ->join('ps_attribute_lang AS al', function ($join) {
                 $join->on('a.id_attribute', '=', 'al.id_attribute')
-                     ->where('al.id_lang', 1);
+                     ->where('al.id_lang', config('app.prestashop_lang', 1));
             })
             ->join('ps_attribute_group AS ag', 'a.id_attribute_group', '=', 'ag.id_attribute_group')
             ->join('ps_attribute_group_lang AS agl', function ($join) {
                 $join->on('ag.id_attribute_group', '=', 'agl.id_attribute_group')
-                     ->where('agl.id_lang', 1);
+                     ->where('agl.id_lang', config('app.prestashop_lang', 1));
             })
             ->whereIn('pa.id_product', $productIds)
             ->select(
@@ -115,12 +115,12 @@ class FilterService
             ->join('ps_feature AS f', 'fp.id_feature', '=', 'f.id_feature')
             ->join('ps_feature_lang AS fl', function ($join) {
                 $join->on('f.id_feature', '=', 'fl.id_feature')
-                     ->where('fl.id_lang', 1);
+                     ->where('fl.id_lang', config('app.prestashop_lang', 1));
             })
             ->join('ps_feature_value AS fv', 'fp.id_feature_value', '=', 'fv.id_feature_value')
             ->join('ps_feature_value_lang AS fvl', function ($join) {
                 $join->on('fv.id_feature_value', '=', 'fvl.id_feature_value')
-                     ->where('fvl.id_lang', 1);
+                     ->where('fvl.id_lang', config('app.prestashop_lang', 1));
             })
             ->whereIn('fp.id_product', $productIds)
             ->select(

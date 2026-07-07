@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \App\Http\Middleware\GuestSessionMiddleware::class,
+            \App\Http\Middleware\SetLanguageMiddleware::class,
         ]);
 
         $middleware->alias([

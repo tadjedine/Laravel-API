@@ -18,7 +18,7 @@ class CarrierController extends Controller
             ->where('c.active', 1)
             ->where('c.deleted', 0)
             ->where('cl.id_shop', 1)
-            ->where('cl.id_lang', (int) config('prestashop.default_lang', 1))
+            ->where('cl.id_lang', (int) config('app.prestashop_lang', 1))
             ->select('c.id_carrier', 'c.name', 'c.is_free', 'cl.delay')
             ->get();
 
