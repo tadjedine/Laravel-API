@@ -4,7 +4,7 @@
 
 # Headless E-Commerce API (Laravel)
 
-This repository contains the robust backend API developed with **Laravel 11**, designed to power a modern headless e-commerce platform (with a Next.js frontend and Prestashop Back office). It manages the entire backend operations including authentication, product catalog, cart manipulation, and a comprehensive checkout process.
+This repository contains the robust backend API developed with **Laravel **, designed to power a modern headless e-commerce platform (with a Next.js frontend and Prestashop Back office). It manages the entire backend operations including authentication, product catalog, cart manipulation, and a comprehensive checkout process.
 
 ## 🚀 Features
 
@@ -35,8 +35,8 @@ This repository contains the robust backend API developed with **Laravel 11**, d
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repository-url>
-   cd laravel-api
+   git clone https://github.com/tadjedine/Laravel-API.git
+   cd Laravel-API
    ```
 
 2. **Install dependencies:**
