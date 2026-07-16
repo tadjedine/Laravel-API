@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, PostController, ProductController, CategoryController, CarrierController, CountryController, FilterController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, ProductController, CategoryController, CarrierController, CountryController, FilterController, StripeController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -94,7 +94,10 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::put('addresses', [CheckoutController::class, 'setAddresses']);
             Route::put('carrier', [CheckoutController::class, 'setCarrier']);
             Route::post('confirm', [CheckoutController::class, 'confirm']);
+            //Route::post('confirm', [StripeController::class, 'createCheckoutSession']);
+            Route::post('stripe/session', [StripeController::class, 'createCheckoutSession']);
         });
+
 
     });
 
