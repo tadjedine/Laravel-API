@@ -13,6 +13,10 @@ use Stripe\Event;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 use App\Enums\PaymentMethod;
+use App\Models\Customer;
+use App\Models\Address;
+use App\Models\Cart;
+use App\Http\Requests\Checkout\GuestCheckoutRequest;
 use DB;
 
 class StripeController extends Controller
@@ -42,6 +46,103 @@ class StripeController extends Controller
 
         $session = $this->stripeService->createCheckoutSession($summary);
 
+
+        return response()->json([
+            'url' => $session->url,
+        ]);
+    }
+
+
+    /**
+     * Guest checkout with Stripe — collect contact info, address, carrier,
+     * then create a Stripe session instead of confirming the order directly.
+     * POST /v1/checkout/guest-stripe-session
+     *
+     * Steps 1-5 mirror CheckoutController::guestConfirm().
+     * Step 6 creates a Stripe session instead of calling confirm().
+     */
+    public function createGuestCheckoutSession(GuestCheckoutRequest $request): JsonResponse
+    {
+        $guestCustomerId = (int) $request->attributes->get('guest_customer_id');
+        $data = $request->validated();
+
+        // 1. Check if the email belongs to a real (non-guest) account
+        $existingReal = Customer::query()
+            ->where('email', $data['email'])
+            ->where('is_guest', 0)
+            ->where('deleted', 0)
+            ->first();
+
+        if ($existingReal) {
+            return response()->json([
+                'message' => 'An account with this email already exists. Please sign in instead.',
+            ], 409);
+        }
+
+        // 2. Update the guest-customer with real contact info
+        $guestCustomer = Customer::query()->findOrFail($guestCustomerId);
+        $guestCustomer->update([
+            'email'     => $data['email'],
+            'firstname' => $data['firstname'],
+            'lastname'  => $data['lastname'],
+            'date_upd'  => now(),
+        ]);
+
+        // 3. Create a shipping address for this guest-customer
+        $address = Address::query()->create([
+            'id_customer'    => $guestCustomerId,
+            'id_country'     => (int) $data['id_country'],
+            'id_state'       => 0,
+            'id_manufacturer'=> 0,
+            'id_supplier'    => 0,
+            'id_warehouse'   => 0,
+            'alias'          => 'Guest Checkout',
+            'firstname'      => $data['firstname'],
+            'lastname'       => $data['lastname'],
+            'address1'       => $data['address1'],
+            'address2'       => $data['address2'] ?? '',
+            'postcode'       => $data['postcode'] ?? '',
+            'city'           => $data['city'],
+            'phone'          => $data['phone'] ?? '',
+            'phone_mobile'   => '',
+            'active'         => 1,
+            'deleted'        => 0,
+            'date_add'       => now(),
+            'date_upd'       => now(),
+        ]);
+
+        // 4. Find the guest's active cart
+        $cart = Cart::query()
+            ->where('id_customer', $guestCustomerId)
+            ->whereDoesntHave('order')
+            ->orderByDesc('id_cart')
+            ->firstOrFail();
+
+        // 5. Set address and carrier on the cart
+        $this->checkoutService->setAddresses(
+            (int) $cart->id_cart,
+            (int) $address->id_address,
+            null
+        );
+        $this->checkoutService->setCarrier(
+            (int) $cart->id_cart,
+            (int) $data['id_carrier']
+        );
+
+        // 6. Get summary and create Stripe session (instead of confirming)
+        $summary = $this->checkoutService->getSummary(
+            (int) $cart->id_cart,
+            $guestCustomerId
+        );
+
+        if (!$summary['is_ready']) {
+            return response()->json([
+                'message' => 'Cart is not ready for checkout.',
+                'errors'  => $summary['validation_errors'],
+            ], 422);
+        }
+
+        $session = $this->stripeService->createCheckoutSession($summary);
 
         return response()->json([
             'url' => $session->url,

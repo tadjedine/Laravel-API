@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
         // Guest checkout (no auth required — uses guest cookie session)
         Route::post('checkout/guest-confirm', [CheckoutController::class, 'guestConfirm']);
+        Route::post('checkout/guest-stripe-session', [StripeController::class, 'createGuestCheckoutSession']);
 
         // Checkout endpoints (public / guest supported)
         Route::get('checkout/summary', [CheckoutController::class, 'summary']);
