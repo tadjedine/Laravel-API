@@ -98,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::post('stripe/session', [StripeController::class, 'createCheckoutSession']);
         });
 
+        Route::get('checkout/session-status', [StripeController::class, 'getSessionStatus']);
         Route::post('webhooks/stripe', [StripeController::class, 'handleWebhook']);
 
     });
