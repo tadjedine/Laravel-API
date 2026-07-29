@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Resources\CustomerResource;
-use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, ProductController, CategoryController, CarrierController, CountryController, FilterController, StripeController};
+use App\Http\Controllers\Api\V1\{AddressController, CartRuleController, CheckoutController, OrderController, ProductController, CategoryController, CarrierController, CountryController, FilterController, SlideController, StripeController};
 use App\Http\Controllers\Api\V1\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,9 +49,10 @@ Route::middleware('auth:sanctum')->group(function(){
 
         Route::apiResource('categories', CategoryController::class);
 
-        // Carriers & Countries (public)
+        // Carriers, Countries & Slides (public)
         Route::get('carriers', [CarrierController::class, 'index']);
         Route::get('countries', [CountryController::class, 'index']);
+        Route::get('slides', [SlideController::class, 'index']);
 
         // Cart endpoints
         Route::post('cart', [CartController::class, 'index']);
